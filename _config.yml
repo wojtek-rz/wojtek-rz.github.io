@@ -88,7 +88,7 @@ defaults:
       show_date: true
       author_profile: true
       read_time: true
-      comments: false
+      comments: true
       share: true
       related: true
   # _pages
@@ -105,3 +105,13 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
+
+comments:
+  provider: "giscus"
+  giscus:
+    repo_id              : "R_kgDOLpTg4A"
+    category_name        : "Announcements"
+    category_id          : "DIC_kwDOLpTg4M4Ceogf"
+    discussion_term      : "pathname"
+    reactions_enabled    : '1'
+    theme                : "light"
