@@ -200,9 +200,9 @@ interpreter. "Backspace" also doesn't work.
 
 After some digging it appears that there exists something called [line discipline](https://en.wikipedia.org/wiki/Line_discipline) and it's main tasks include:
 
-_For example, the standard line discipline processes the data it receives from the hardware driver and from applications writing to the device according to the requirements of a terminal on a Unix-like system. On input, it handles special characters such as the interrupt character (typically Control-C) and the erase and kill characters (typically backspace or delete, and Control-U, respectively) and, on output, it replaces all the LF characters with a CR/LF sequence._
+> For example, the standard line discipline processes the data it receives from the hardware driver and from applications writing to the device according to the requirements of a terminal on a Unix-like system. On input, it handles special characters such as the interrupt character (typically Control-C) and the erase and kill characters (typically backspace or delete, and Control-U, respectively) and, on output, it replaces all the LF characters with a CR/LF sequence.
 
-Our problem can be solved [xterm-pty](https://github.com/mame/xterm-pty?tab=readme-ov-file) module.
+Our problem can be solved by [xterm-pty](https://github.com/mame/xterm-pty?tab=readme-ov-file) module.
 
 A PTY, or pseudoterminal, is an intermediate layer between a process and a terminal. It is not just a pipe, but provides several useful functionalities such as input echo, line editing, conversion, etc. PTY is essential for running real-world CUI programs.
 
@@ -233,16 +233,13 @@ npm run build
 ```
 to build the static website, the result can be available [here](https://wojteks-misc-files.pages.dev/).
 
-The wasmer sdk library doesn't work out of the box. It uses javascript's sharedArrayBuffer to communicate between threads and most browsers block this functionality, if the headers 
-```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
-are not present.
+The wasmer sdk library doesn't work out of the box. It uses javascript's `sharedArrayBuffer` to communicate between threads and most browsers block this functionality, unless the headers 
+`Cross-Origin-Opener-Policy: same-origin` and  `Cross-Origin-Embedder-Policy: require-corp` are present.
 {:.notice--warning}
 
-All in all, it was a complicated trip, but every problem was easily solved. 
+All in all, it was a complicated trip, but every problem was solved in the end. 
 I certainly learned a lot along the way.
 
 Thanks for reading,
 Wojtek
+
