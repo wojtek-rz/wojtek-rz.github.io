@@ -10,8 +10,6 @@ tags:
   - Javascript
 ---
 
-# How to present your programs to the public
-
 Have you ever had the feeling that you have written a cool script or program and you want to show it to the world? If so, then what would be the best way 
 to show it to everyone? I always think about two aspects of a good demo. 
 The first one is whether potential user can experience and play with your software.
