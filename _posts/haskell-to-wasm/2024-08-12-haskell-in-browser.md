@@ -1,5 +1,5 @@
 ---
-title: "Run your haskell programs on the website"
+title: "From Code to Execution: Running Haskell Programs on the Web"
 categories:
   - blog
 tags:
