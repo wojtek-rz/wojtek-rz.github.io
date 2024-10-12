@@ -18,6 +18,8 @@ public:
     // Copy assignment operator
     Foo& operator=(const Foo&) { std::cout << "A copy assignment operator called.\n"; return *this; }
     Foo& operator=(Foo&&) { std::cout << "A move assignment operator called.\n"; return *this; }
+
+    void printX() const { std::cout << "x: " << x << std::endl; }
 };
 
 Foo createNewFooObject() {
@@ -30,8 +32,8 @@ Foo createNewFooObject() {
 //     return 0;
 // }
 
-void giveMeFoo(Foo foo){
-}
+// void giveMeFoo(Foo foo){
+// }
 
 // int main(){
 //     Foo foo{5};
@@ -41,17 +43,20 @@ void giveMeFoo(Foo foo){
 // }
 
 void throwFoo(){
-    throw Foo{5};
+    Foo foo{5};
+    foo.printX();
+    throw foo;
 }
 
-// int main(){
-//     try{
-//         throwFoo();
-//     } catch(Foo foo){
-//         std::cout << "Caught an exception\n";
-//     }
-//     return 0;
-// }
+int main(){
+    try{
+        throwFoo();
+    } catch(const Foo &foo){
+        foo.printX();
+        std::cout << "Caught an exception\n";
+    }
+    return 0;
+}
 
 Foo createNewFooObjectPrvalue() {
     return Foo{5};
@@ -62,8 +67,8 @@ Foo createNewFooObjectPrvalue() {
 //     return 0;
 // }
 
-int main() {
-    giveMeFoo(Foo{5});
-    return 0;
-}
+// int main() {
+//     giveMeFoo(Foo{5});
+//     return 0;
+// }
 

@@ -69,11 +69,13 @@ When I ran this code, the output was the first option. None of the copy construc
 
 # Copy Elision
 
-The C++ compiler uses a technique called **copy elision**. It ensures that if some calls to copy constructors can be avoided, they are. But first, let's understand when a copy constructor is invoked.
+The C++ compiler uses a technique called **copy elision**. 
+It ensures that if some calls to copy constructors can be avoided, they are. 
+But first, let's understand when a copy constructor is invoked.
 
 ## When the Copy Constructor is Called
 
-> The copy constructor is called whenever an object is initialized (by direct-initialization or copy-initialization) from another object of the same type (unless overload resolution selects a better match or the call is elided), which includes.
+> The copy constructor is called whenever an object is initialized (by **direct-initialization** or **copy-initialization**) from another object of the same type (unless overload resolution selects a better match or the call is elided), which includes.
 > -- <cite>[cppreference](https://en.cppreference.com/w/cpp/language/copy_constructor)</cite>
 
 While direct initialization is straightforward, initializing an object from an explicit set of constructor arguments (e.g., `T object(arg1, arg2, ...);`), copy-initialization is more nuanced. According to [cppreference](https://en.cppreference.com/w/cpp/language/copy_initialization), there are several scenarios:
@@ -82,40 +84,63 @@ While direct initialization is straightforward, initializing an object from an e
 3. `return other;` - Returning from a function that returns by value.
 4. `throw object; catch (T object)` - Throwing or catching an exception by value.
 
-In the first code snippet, two copy constructors should be called: the first when returning from a function (3) and the second when declaring a variable with an equal sign (1). But none are called. Let's explore the second and third cases.
+In the first code snippet, two copy constructors should be called: the first when returning from a function (3) and the second when declaring a variable with an equal sign (1). 
 
-```cpp
-void giveMeFoo(Foo foo) {}
+## Are There Guarantees?
 
-int main() {
-    Foo foo{5};
-    giveMeFoo(foo);
-    std::cout << "After function call\n";
-    return 0;
-}
-```
+Since C++17, there’s something called **guaranteed copy elision**.
+It states:
+> Since C++17, a prvalue is not materialized until needed, and then it is constructed directly into the storage of its final destination.
+> -- <cite>[cppreference](https://en.cppreference.com/w/cpp/language/copy_elision)</cite>
 
-Output:
-```
-An object was created.
-Copy constructor called.
-An object was destroyed.
-After function call
-An object was destroyed.
-```
+It means, that even when the syntax suggests a copy constructor should be called, but the value that is the source of the copy is a prvalue, 
+the compiler can optimize it away. The result is just a single constructor call in the final destination.
 
-When passing an argument to a function by value, the copy constructor is invoked as expected (a common performance issue for beginners). What about throw and catch?
+The documentation provides two examples of this guarantee:
+1. When initializing an object in a return statement with a prvalue:
+    ```cpp
+    return Foo{5};
+    ```
+    This optimization was earlier called URVO - "unnamed return value optimization" and was a common optimization even before C++17, but is now a part of the standard. 
 
+2. During object initialization when the initializer expression is a prvalue:
+    ```cpp
+    Foo x = Foo{Foo{Foo{5}}};
+    ```
+    Here, the fact that the constructors are chained together doesn't matter.
+    It's worth noting that "move" assignments are elided, not "copy". 
+
+Beyond that, the standard also specifies situations where the compiler **may** apply copy elision but isn’t obligated to, such as:
+1. `return` statements with a named operand. 
+   This optimization is called NRVO - "named return value optimization" and example of that was in the first code snippet.
+   As we saw, most compilers implement this optimization, but it’s not mandatory.
+2. Object initialization from a temporary.
+3. `throw` expressions with a named operand.
+4. Exception handlers.
+
+For more details, check [cppreference](https://en.cppreference.com/w/cpp/language/copy_elision).
+
+With the introduction of move semantics in C++11, the compiler can also elide move constructors the same way it does with copy constructors.
+{:.notice--info}
+
+
+## Some strange example
+
+The compilers can be easily tricked when it comes to copy elision. 
+
+Take this code for example:
 ```cpp
 void throwFoo() {
     Foo foo{5};
+    foo.printX();
     throw foo;
 }
 
 int main() {
-    try {
+    try{
         throwFoo();
-    } catch(Foo foo) {
+    } catch(Foo foo){
+        foo.printX();
         std::cout << "Caught an exception\n";
     }
     return 0;
@@ -124,101 +149,32 @@ int main() {
 The result is:
 ```
 An object was created.
-Move constructor called.
+x: 5
+A move constructor called.
 An object was destroyed.
-Copy constructor called.
+A copy constructor called.
+x: 1600677166
 Caught an exception
 An object was destroyed.
 An object was destroyed.
 ```
+The code compiled without any warnings or errors. 
+The output is unexpected, as the object is destroyed and then copied.
+If there are any rules in the C++ that says I can't do that, they are not easy to find.
+C++ reference only says [about the exception throwing](https://en.cppreference.com/w/cpp/language/throw):
 
-For the `throw` expression, the compiler chose the move constructor, and the `catch` statement invoked the copy constructor. If we change `throw foo;` to `throw Foo{5};`, the first move is optimized away.
+> Let `ex` be the conversion result:
+> * The exception object is copy-initialized from `ex`.
 
-To summarize:
-1. `T object = other;` - Copy elided.
-2. `f(other)` - Copy constructor called.
-3. `return other;` - Copy elided.
-4. `throw object;` - Copy partially elided; `catch (T object)` - Copy constructor called.
+The exepction object wasn't copy-initialized, but moved-initialized and produced an undifined behavior.
+If we changed the catch parameter to `const Foo& foo`, the output would be very simmiliar but the reported x value would be `0`.
+If we would change `throw foo;` to `throw Foo{5};`, the move would be elided.
 
-## Are There Guarantees?
-
-Since C++17, there’s something called **guaranteed copy elision**. Two cases provide this guarantee:
-1. When initializing an object in a return statement with a prvalue:
-```cpp
-return Foo{5};
-```
-2. During object initialization when the initializer expression is a prvalue:
-```cpp
-Foo x = Foo{Foo{5}};
-```
-
-In these scenarios, copy elision is guaranteed. Beyond that, the standard also specifies situations where the compiler **may** apply copy elision but isn’t obligated to, such as:
-1. `return` statements with a named operand.
-2. Object initialization from a temporary.
-3. `throw` expressions.
-4. Exception handlers.
-
-For more details, check [cppreference](https://en.cppreference.com/w/cpp/language/copy_elision).
-
-## Examples
-
-Let's revisit the initial code:
-
-```cpp
-Foo createNewFooObject() {
-    Foo foo{5};
-    return foo;
-}
-
-int main() {
-    auto foo = createNewFooObject();
-    return 0;
-}
-```
-
-The value returned by `createNewFooObject` isn’t a prvalue, so copy elision isn’t mandatory, but it’s a common optimization implemented by most compilers. This scenario is known as NRVO - "named return value optimization."
-
-Consider a slight modification:
-
-```cpp
-Foo createNewFooObjectPrvalue() {
-    return Foo{5};
-}
-
-int main() {
-    auto foo = createNewFooObjectPrvalue();
-    return 0;
-}
-```
-Because the expression in `createNewFooObjectPrvalue` is a prvalue, copy elision is guaranteed. This specific optimization is called URVO - "unnamed return value optimization."
-
-Another example:
-
-```cpp
-auto foo = Foo{Foo{Foo{5}}};
-```
-Here, because the right-hand side consists of prvalues, guaranteed copy elision applies. It's worth noting that "move" operations are elided, not "copy".
-
-Finally:
-
-```cpp
-int main() {
-    giveMeFoo(Foo{5});
-    return 0;
-}
-```
-This initializes a function parameter from a temporary. Though not mandatory, most compilers optimize this to avoid the copy constructor.
+Maybe the conclusion is to always use `throw` with a temporary object, not a named one.
 
 # Summary
 
-In summary, we have:
-### Guaranteed copy elision:
-1. In return statements with a prvalue operand.
-2. During object initialization with a prvalue expression.
-
-### Non-mandatory copy elision:
-1. In return statements with named operands.
-2. Object initialization from unnamed temporaries.
-3. `Throw` expressions and handlers.
-
-In conclusion, while guaranteed contexts ensure no copies or moves are made, in other scenarios, copy constructors can still be invoked, especially when function arguments are passed by value.
+Before C++17, copy elision was an optimization that compilers could apply, but it wasn't guaranteed. 
+It could generate different results depending on the compiler and optimization level (like debug/release mode).
+It's worth noting that the code that relies on possible optimizations like "named return value optimization" is not portable 
+and can produce different results on different compilers.
