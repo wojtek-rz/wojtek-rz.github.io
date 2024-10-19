@@ -2,9 +2,15 @@
 title: Links
 links:
   - title: GitHub
-    description: GitHub is the world's largest software development platform.
-    website: https://github.com
+    description: Main github repo for my projects.
+    website: https://github.com/wojtek-rz
     image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+  - title: LinkedIn
+    description: My LinkedIn profile.
+    website: https://www.linkedin.com/in/wojciech-rzepka/
+  - title: University of Warsaw
+    description: My faculty's website.
+    website: https://www.mimuw.edu.pl/pl/
 menu:
     main: 
         weight: 4
@@ -14,20 +20,4 @@ menu:
 comments: false
 ---
 
-To use this feature, add `links` section to frontmatter.
-
-This page's frontmatter:
-
-```yaml
-links:
-  - title: GitHub
-    description: GitHub is the world's largest software development platform.
-    website: https://github.com
-    image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
-  - title: TypeScript
-    description: TypeScript is a typed superset of JavaScript that compiles to plain JavaScript.
-    website: https://www.typescriptlang.org
-    image: ts-logo-128.jpg
-```
-
-`image` field accepts both local and external images.
+Here are some links to my other profiles and projects. Feel free to check them out!
