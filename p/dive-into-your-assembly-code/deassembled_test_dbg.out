@@ -1,0 +1,42 @@
+
+main.o:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+Disassembly of section .plt:
+
+Disassembly of section .plt.got:
+
+Disassembly of section .text:
+
+0000000000001129 <test(int)>:
+int test (int n)
+{
+    1129:	endbr64 
+    112d:	push   rbp
+    112e:	mov    rbp,rsp
+    1131:	mov    DWORD PTR [rbp-0x14],edi
+  int total = 0;
+    1134:	mov    DWORD PTR [rbp-0x8],0x0
+
+  for (int i = 0; i < n; i++)
+    113b:	mov    DWORD PTR [rbp-0x4],0x0
+    1142:	jmp    1151 <test(int)+0x28>
+    total += i * i;
+    1144:	mov    eax,DWORD PTR [rbp-0x4]
+    1147:	imul   eax,eax
+    114a:	add    DWORD PTR [rbp-0x8],eax
+  for (int i = 0; i < n; i++)
+    114d:	add    DWORD PTR [rbp-0x4],0x1
+    1151:	mov    eax,DWORD PTR [rbp-0x4]
+    1154:	cmp    eax,DWORD PTR [rbp-0x14]
+    1157:	jl     1144 <test(int)+0x1b>
+
+  return total;
+    1159:	mov    eax,DWORD PTR [rbp-0x8]
+}
+    115c:	pop    rbp
+    115d:	ret    
+
+Disassembly of section .fini:

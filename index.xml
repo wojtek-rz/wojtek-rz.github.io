@@ -1,0 +1,1765 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Wojtek Rzeplinski's website</title><link>https://wojtek-rz.github.io/</link><description>Recent content on Wojtek Rzeplinski's website</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://wojtek-rz.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>NumPy explained - meshgrid function</title><link>https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/</link><pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/</guid><description>&lt;p>When searching the web for explanations of &lt;code>numpy.meshgrid&lt;/code> function, I found that most of them are useless. They contain very abstract description copied from the documentation and provide one simple example that doesn&amp;rsquo;t explain anything why it works the way it does. And in many cases they forgot that more than 2 dimensions exist. And what is this &lt;code>indexing='ij'&lt;/code> parameter? In this post I will try to explain how &lt;code>meshgrid&lt;/code> works and why it is useful.&lt;/p>
+&lt;h2 id="introduction---how-to-keep-array-of-points-in-2d-space">&lt;a href="#introduction---how-to-keep-array-of-points-in-2d-space" class="header-anchor">&lt;/a>Introduction - How to keep array of points in 2D space?
+&lt;/h2>&lt;p>Imagine a problem, that you have to store some function $f(x) = y$ on the Cartesian plane (meaning &amp;ldquo;x-y&amp;rdquo; plane).
+To keep things simple let&amp;rsquo;s assume the function is $f(x) = x^2$.
+A person not familiar with numpy or programming, but familiar with discrete functions from the school, would probably write something like this:&lt;/p>
+&lt;p>&lt;strong>First approach:&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;#34;arr&amp;#34; is an array of values&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">4&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">9&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">4&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">16&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#in general: arr[x] = y&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>But this code has various problems. It only works when the &amp;ldquo;x&amp;rdquo; values are non-negative integers. When you have some function that doesn&amp;rsquo;t have discrete values or they don&amp;rsquo;t appear in equal intervals, you can&amp;rsquo;t store it in this way. The natural way to store such a function is to create a &lt;strong>new array, that represents the the &amp;ldquo;x&amp;rdquo; values&lt;/strong>. This way, to store one function (or one set of points on the graph), you need two arrays: one for &amp;ldquo;x&amp;rdquo; values and one for &amp;ldquo;y&amp;rdquo; values.&lt;/p>
+&lt;p>&lt;strong>Better approach:&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In this case, the &amp;ldquo;x&amp;rdquo; array represents simple indexes, but in general it can be any array of values. As a generalization, we will think of this two arrays as a set of points in 2D space. Some confusion may arise from the fact, that each point has index, so we have like 3 things: index, x value and y value. But the order of the points is actually not as important as it may seem.&lt;/p>
+&lt;p>Let&amp;rsquo;s do the plot of this two functions:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">import&lt;/span> &lt;span class="nn">numpy&lt;/span> &lt;span class="k">as&lt;/span> &lt;span class="nn">np&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kn">import&lt;/span> &lt;span class="nn">matplotlib.pyplot&lt;/span> &lt;span class="k">as&lt;/span> &lt;span class="nn">plt&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">5&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">25&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;ro&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Changing the order of the points...&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">5&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">25&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># does it change the plot?&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;ro&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0.png"
+width="543"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0_hu5327014475683305555.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0_hu9706165383509683289.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="131"
+data-flex-basis="315px"
+>&lt;/p>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1.png"
+width="543"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1_hu5327014475683305555.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1_hu9706165383509683289.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="131"
+data-flex-basis="315px"
+>&lt;/p>
+&lt;p>After changing the order of the points, the plot looks the same.&lt;/p>
+&lt;p>Note that the continous functions are also stored that way. If you think about this, it&amp;rsquo;s not possible to store infinite number of points in the computer memory. What we have to do is to store some of them and if they are close enough, we won&amp;rsquo;t see the difference. To store a continous function in the computer memory to use it in some way, we have to create two arrays:
+one for &amp;ldquo;x&amp;rdquo; values and one for &amp;ldquo;y&amp;rdquo; values. The &amp;ldquo;x&amp;rdquo; values are usually generated by using &lt;code>np.linspace&lt;/code> or &lt;code>np.arange&lt;/code> function.&lt;/p>
+&lt;p>&lt;strong>In general, when we want to store some N-dimensional set of points in numpy, we have to create N arrays.&lt;/strong>&lt;/p>
+&lt;h2 id="meshgrid---what-is-it">&lt;a href="#meshgrid---what-is-it" class="header-anchor">&lt;/a>Meshgrid - what is it?
+&lt;/h2>&lt;p>The &lt;code>meshgrid&lt;/code> function is a way to create a grid of points in a many dimensional space. Simmilary to the graphs we generated above, we want to create graphs that will represent a grid of points.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;o&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0.png"
+width="534"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0_hu14928872166949992371.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0_hu4030102482710682576.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;p>Each point has coordinates &lt;code>(x_1, x_2, x_3, ..., x_N)&lt;/code>, where &lt;code>x_1&lt;/code> is the coordinate of the first axis, &lt;code>x_2&lt;/code> is the coordinate of the second axis and so on. The grid is created by taking all possible combinations of the points from the input arrays. We can imagine that each input array great a line, and the points are where the lines intersect.&lt;/p>
+&lt;p>The output of the &lt;code>meshgrid&lt;/code> function is a list of arrays, where each array represents one dimension.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]]
+gy:
+[[0 0 0 0 0 0]
+[1 1 1 1 1 1]
+[2 2 2 2 2 2]
+[3 3 3 3 3 3]
+[4 4 4 4 4 4]
+[5 5 5 5 5 5]]
+&lt;/code>&lt;/pre>
+&lt;p>We have array of values of the first dimension x - gx and array of values of the second dimension y - gy. One point one grid has it&amp;rsquo;s position determined by the coresponding values in each array - see the ilustration below. The point takes it&amp;rsquo;s first dimension value from the gx array and the second dimension value from the gy array.&lt;/p>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot.png"
+width="539"
+height="654"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot_hu8016046939532002911.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot_hu8756571112508235526.png 1024w"
+loading="lazy"
+alt="Screenshot from 2024-10-12 21-36-43.png"
+class="gallery-image"
+data-flex-grow="82"
+data-flex-basis="197px"
+>&lt;/p>
+&lt;p>In the introduction I said that each point on the graph has also it&amp;rsquo;s index in the arrays, that is not important (as the order is not important). Here, each point has two indices, because we have two dimension.&lt;/p>
+&lt;h2 id="why-not-use-1-dim-arrays">&lt;a href="#why-not-use-1-dim-arrays" class="header-anchor">&lt;/a>Why not use 1-dim arrays?
+&lt;/h2>&lt;p>When I try to flatten the 2D coords arrays to 1D arrays, I have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">flatten&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">flatten&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;o&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5]
+gy:
+[0 0 0 0 0 0 1 1 1 1 1 1 2 2 2 2 2 2 3 3 3 3 3 3 4 4 4 4 4 4 5 5 5 5 5 5]
+&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1.png"
+width="534"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1_hu12645546182342016098.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1_hu8650582429665530684.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;p>We have exacly the same output. The reason for that is simple. I pointed out that the indices are not important, but the values are. The values are the coordinates of the points. So I changed the indices of the points and everything still works.
+If I would write the meshgrid function by myself, I would probably use 1D arrays, because it&amp;rsquo;s simpler. But the numpy developers decided to use multi-dimensional arrays.&lt;/p>
+&lt;p>One of the answers it is easier to futher use the meshgrid values in our computations, because we can predict what the values are. When we take meshgrid arrays:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># x, y are 1D arrays&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>the following property holds (you can check it by yourself on the examples above):&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In the &lt;code>gx&lt;/code> array, the value is determined entirely by the second index, and in the &lt;code>gy&lt;/code> array, the value is determined entirely by the first index.&lt;/p>
+&lt;p>This is very useful, because we can easily see what the values are and how they are ordered, but also what are the dimensions of the arrays.&lt;/p>
+&lt;h2 id="the-indexing-parameter">&lt;a href="#the-indexing-parameter" class="header-anchor">&lt;/a>The &amp;lsquo;indexing&amp;rsquo; parameter
+&lt;/h2>&lt;p>When I read the description of this parameter the first thing I tried was transposing the output arrays. But that gave exacly the same graph as before, so I though to myself: &amp;ldquo;What is the point of this parameter?&amp;rdquo;.&lt;/p>
+&lt;p>The &lt;code>indexing&lt;/code> parameter is used to which array should be the first one in the indices of each points.&lt;/p>
+&lt;p>If you looked confused about the previous paragraph, when the first coordinate &lt;code>i&lt;/code> in &lt;code>gx[i,j]&lt;/code> what the one that corresponded with the second array &lt;code>y&lt;/code> then here&amp;rsquo;s the answer. If you have &lt;code>xy&lt;/code> cartesian plane, then the &lt;code>x&lt;/code> coordinate actualy points to imaginary &amp;ldquo;column&amp;rdquo; of numbers in space, and the &lt;code>y&lt;/code> parameter points to the &amp;ldquo;row&amp;rdquo; of numbers. Because the &lt;code>meshgrid&lt;/code> function output should be interpreted as a matrix, when input is on the cartesian plane, the first two dimensions are swapped.&lt;/p>
+&lt;p>There are two possible values of the &lt;code>indexing&lt;/code> parameter: &lt;code>'xy'&lt;/code> and &lt;code>'ij'&lt;/code>. The default value is &lt;code>'xy'&lt;/code> and was explained above. When you set it to &lt;code>'ij'&lt;/code>, you use matrix indexing in the input arrays, so the first array is the first dimension in the grid arrays and the second array is the second dimension. In &lt;code>ij&lt;/code> mode, the following property holds:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In 90% of the cases you won&amp;rsquo;t need to know the difference. But there is simple example, when it matters. When you are iterating over the grid arrays, you have to know which dimensions are on which position.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">10&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">for&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="n">j&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">y&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="c1"># do something with gx[i,j]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>---------------------------------------------------------------------------
+IndexError Traceback (most recent call last)
+Cell In[35], line 6
+4 for i in range(len(x)):
+5 for j in range(len(y)):
+----&amp;gt; 6 gx[i,j] = 0 # do something with gx[i,j]
+7 gy[i,j] = 0
+IndexError: index 6 is out of bounds for axis 0 with size 6
+&lt;/code>&lt;/pre>
+&lt;p>The correct code would be:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">10&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">for&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">y&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="n">j&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="c1"># do something with gx[i,j]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="the-sparse-parameter">&lt;a href="#the-sparse-parameter" class="header-anchor">&lt;/a>The &amp;lsquo;sparse&amp;rsquo; parameter
+&lt;/h2>&lt;p>The &amp;lsquo;sparse&amp;rsquo; parameter is used to return the output arrays as sparse matrices.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">sparse&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="kc">True&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[[0 1 2 3 4 5]]
+gy:
+[[0]
+[1]
+[2]
+[3]
+[4]
+[5]]
+&lt;/code>&lt;/pre>
+&lt;p>This strange form of the output uses the broadcast mechanism to save memory.&lt;/p>
+&lt;p>The broadcast is a mechanism that allows numpy to perform operations on arrays of different shapes. The dimensions are compatible, when they are equal or one of them is 1. For example, arrays of shape (3, 1, 3) and (1, 4, 1) are compatible and the resulting array will have shape (3, 4, 3). You can think of this as repeating the smaller array along the missing dimensions, so that it matches the shape of the larger array. In our example (3,1,3) is broadcasted to (3,4,3) by repeating the second dimension 4 times, so accesing (i, j, k) is the same as accesing (i, 0, k).&lt;/p>
+&lt;p>The sparse output is a way to save memory, because if we have a function like this: $f(x,y) = x^2 + y^2$&lt;/p>
+&lt;p>we can use broadcast mechanism on the output of the meshgrid function.
+Output dimensions in the example are &lt;code>gx.shape=(6, 1)&lt;/code> and gy.shape=(1, 6). The resulting array will have shape (6, 6) and the value at position (i, j) will be &lt;code>gx[i, 0]**2 + gy[0, j]**2&lt;/code>. So to calculate the function values we would do:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">f_values&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gx&lt;/span> &lt;span class="o">**&lt;/span> &lt;span class="mi">2&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">**&lt;/span> &lt;span class="mi">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;f_values:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">f_values&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>f_values:
+[[ 0 1 4 9 16 25]
+[ 1 2 5 10 17 26]
+[ 4 5 8 13 20 29]
+[ 9 10 13 18 25 34]
+[16 17 20 25 32 41]
+[25 26 29 34 41 50]]
+&lt;/code>&lt;/pre>
+&lt;h2 id="conclusion">&lt;a href="#conclusion" class="header-anchor">&lt;/a>Conclusion
+&lt;/h2>&lt;p>It is much easier to understand something when you know why it was created that way. I hope that this post helped you to understand the &lt;code>meshgrid&lt;/code> function and why it is useful. If you have any questions or suggestions, please let me know in the comments.&lt;/p></description></item><item><title>Dive into your assembly code!</title><link>https://wojtek-rz.github.io/p/dive-into-your-assembly-code/</link><pubDate>Fri, 13 Sep 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/dive-into-your-assembly-code/</guid><description>&lt;p>When debugging or trying to
+maximize the performance of a program, it is often
+useful to look at the assembly code generated by the compiler.
+There are many tutorials on how to generate assembly code with &lt;code>gcc&lt;/code> command,
+but many times you have to work with a large, existing codebase that is composed
+of many &lt;code>CMake&lt;/code> targets and library. In this article I will compare different methods
+to read assembly code from C/C++ projects. Typical use cases are:&lt;/p>
+&lt;ul>
+&lt;li>When you are dealing with functions independent from the rest of the codebase,
+or with a few files to analize, best universal tool is &amp;ldquo;Compiler Explorer&amp;rdquo;.&lt;/li>
+&lt;li>When you are working with a large project that uses &lt;code>CMake&lt;/code>, you can use
+default targets to see the assembly of &lt;code>cpp&lt;/code> files created by
+&lt;code>CMake&lt;/code>. You can modify the flags used to generate that assembly, details in &amp;ldquo;GCC&amp;rdquo; and &amp;ldquo;CMake&amp;rdquo; sections.&lt;/li>
+&lt;li>When you have a compiled object file you can use &lt;code>objdump&lt;/code> tool to see the assembly code, see &amp;ldquo;Assembly from object file&amp;rdquo; section.&lt;/li>
+&lt;/ul>
+&lt;h3 id="compiler-explorer">&lt;a href="#compiler-explorer" class="header-anchor">&lt;/a>Compiler Explorer
+&lt;/h3>&lt;p>Compiler Explorer is a web-based tool that allows you to see assembly code
+generated by compiler in &amp;ldquo;real time&amp;rdquo; (every change to source code recompiles the assembly). It was created by Matt Godbolt and is
+available at &lt;a class="link" href="https://godbolt.org/" target="_blank" rel="noopener"
+>godbolt.org&lt;/a>. It supports many compilers
+and you can use it to compare the assembly code generated by different compilers. Assembly code is cleaned up and colorized, so it is easier to read. You can also see which lines of the assembly code correspond to which lines of the source code.&lt;/p>
+&lt;p>Compiler Explorer can also be run locally. It is open source and available on &lt;a class="link" href="https://github.com/compiler-explorer/compiler-explorer" target="_blank" rel="noopener"
+>GitHub&lt;/a>. To install
+it, you need to have Node.js installed. Clone the repository and run &lt;code>make&lt;/code> in the root directory. This will install all the necessary dependencies, build the project, find the compilers installed on your system and start the http server. More detailed instructions can be found &lt;a class="link" href="https://www.youtube.com/watch?v=I2cKVRzJhS0" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/p>
+&lt;p>But most of the time you will want see the assembly of an existing project, containing multiple files and libraries. Fortunately, Compiler Explorer supports &lt;code>CMake&lt;/code>. When running locally, to load a project you have to:&lt;/p>
+&lt;ul>
+&lt;li>From the top menu `Add -&amp;gt; Tree (IDE Mode).&lt;/li>
+&lt;li>From the Tree menu &lt;code>Project -&amp;gt; Choose file&lt;/code> and select zipped project file.&lt;/li>
+&lt;li>Select &lt;code>CMake&lt;/code> checkbox.&lt;/li>
+&lt;li>Choose build type for cmake, that would contain debug information (e.g. &lt;code>-DCMAKE_BUILD_TYPE=Debug&lt;/code>).&lt;/li>
+&lt;li>Write name of the target you would like to compile&lt;/li>
+&lt;li>Select &lt;code>Add new -&amp;gt; Compiler&lt;/code> and wait for it to compile.&lt;/li>
+&lt;/ul>
+&lt;p>The C++ project I currently work with has 160 files, so Godbolt had a tough challenge,
+but the website successfully handled the challenge of compiling my project.
+It wasn&amp;rsquo;t the smoothiest experience, but that&amp;rsquo;s understendable. The site was very slow,
+and the project took 115 seconds to recompile every change (locally it takes 10 seconds,
+because I can build it with 12 cpu cores). I had to change the timout value, which was 10
+seconds by default (github issue &lt;a class="link" href="https://github.com/compiler-explorer/compiler-explorer/issues/601" target="_blank" rel="noopener"
+>here&lt;/a>).
+To do that you have to create a file from the root directory of the project called
+&lt;code>etc/config/compiler-explorer.local.properties&lt;/code> and add the following line:
+&lt;code>compileTimeoutMs=100000&lt;/code>.&lt;/p>
+&lt;p>It was clear that the main use for the project is to work on server, not locally.
+I could not see the output &lt;code>CMake&lt;/code> generated until the compilation was finished and the files I uploaded to the website were not the same as the ones I had on my computer.&lt;/p>
+&lt;p>It&amp;rsquo;s important to note, that there exists a script from the compiler-explorer project called &lt;a class="link" href="https://github.com/compiler-explorer/asm-parser/tree/main" target="_blank" rel="noopener"
+>&lt;code>asm-parser&lt;/code>&lt;/a>,
+that will clean the assembly code.&lt;/p>
+&lt;h3 id="compiling-with-gcc">&lt;a href="#compiling-with-gcc" class="header-anchor">&lt;/a>Compiling with GCC
+&lt;/h3>&lt;p>Simple answer: use the &lt;a class="link" href="https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html#index-S" target="_blank" rel="noopener"
+>&lt;code>-S&lt;/code>&lt;/a> option, which tells the compiler to stop after the assembly phase.
+The result will be assembly code with &lt;code>.s&lt;/code> extension.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">g++ -S main.cpp -o main.s
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Unless you can read AT&amp;amp;T assembly Syntax you will probably want to use the &lt;code>-masm=intel&lt;/code> option to get the Intel syntax.&lt;/p>
+&lt;p>There are a few options to make assembly code more readable. The &lt;a class="link" href="https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#index-fverbose-asm" target="_blank" rel="noopener"
+>&lt;code>-fverbose-asm&lt;/code>&lt;/a> option will add commentary from the original source code. It also adds the architecture and system information at the top of the file.&lt;/p>
+&lt;p>You would like to also remove &lt;a class="link" href="https://stackoverflow.com/questions/2529185/what-are-cfi-directives-in-gnu-assembler-gas-used-for" target="_blank" rel="noopener"
+>&lt;code>.cfi&lt;/code>&lt;/a> directives from your assembly,
+as they are used for exception handling and debugging. To disable them
+use &lt;code>-fno-asynchronous-unwind-tables&lt;/code>, &lt;code>-fno-exceptions&lt;/code> options. Also &lt;code>-fno-rtti&lt;/code> and &lt;code>-fno-dwarf2-cfi-asm&lt;/code> can be useful, as explained &lt;a class="link" href="https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">g++ -S -fverbose-asm -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm -masm&lt;span class="o">=&lt;/span>intel main.cpp -o main.s
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>For example the following C++ code:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">int&lt;/span> &lt;span class="nf">test&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="n">n&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">int&lt;/span> &lt;span class="n">total&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="o">&amp;lt;&lt;/span> &lt;span class="n">n&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="n">i&lt;/span>&lt;span class="o">++&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">total&lt;/span> &lt;span class="o">+=&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">i&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">total&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Will produce the following assembly code:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">_Z4testi:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> endbr64
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> push rbp &lt;span class="c1">#&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov rbp, rsp &lt;span class="c1">#,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov DWORD PTR -20&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, edi &lt;span class="c1"># n, n&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:29: int total = 0;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">0&lt;/span> &lt;span class="c1"># total,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:31: for (int i = 0; i &amp;lt; n; i++)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">0&lt;/span> &lt;span class="c1"># i,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:31: for (int i = 0; i &amp;lt; n; i++)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> jmp .L9 &lt;span class="c1">#&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">.L10:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:32: total += i * i;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov eax, DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span> &lt;span class="c1"># tmp85, i&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> imul eax, eax &lt;span class="c1"># _1, tmp85&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:32: total += i * i;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> add DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, eax &lt;span class="c1"># total, _1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:31: for (int i = 0; i &amp;lt; n; i++)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> add DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">1&lt;/span> &lt;span class="c1"># i,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">.L9:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:31: for (int i = 0; i &amp;lt; n; i++)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov eax, DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span> &lt;span class="c1"># tmp86, i&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> cmp eax, DWORD PTR -20&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span> &lt;span class="c1"># tmp86, n&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> jl .L10 &lt;span class="c1">#,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:34: return total;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> mov eax, DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span> &lt;span class="c1"># _7, total&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># main.cpp:35: }&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> pop rbp &lt;span class="c1">#&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ret
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>But assembly code won&amp;rsquo;t always be as readable as this. In most useful cases,
+you will compile your code with optimization enabled, which will make the
+assembly code harder to read, as the compiler can also change the order of
+instructions, remove some of them, or inline some functions.&lt;/p>
+&lt;p>You can also try different approach. Instead of creating assembly file with
+cpp lines as commentary, you could create a source code with compiled assembly
+pieces. This can be done with (&lt;a class="link" href="https://gcc.gnu.org/onlinedocs/gcc/Assembler-Options.html" target="_blank" rel="noopener"
+>&lt;code>-Wa&lt;/code>&lt;/a>) option.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">-a[sub-option...] turn on listings
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Sub-options [default hls]:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> c omit false conditionals
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> d omit debugging directives
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> g include general info
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> h include high-level source
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> l include assembly
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> m include macro expansions
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> n omit forms processing
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> s include symbols
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> =FILE list to FILE (must be last sub-option)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We pass to assembler options &lt;code>adhl&lt;/code>, so we add &lt;code>-Wa,-adhl&lt;/code>. The output would
+not be valid assembly code, but it will be assembly list mixed with source code.
+You also have to pass &lt;code>g&lt;/code> option to GCC, so the assembler can match source code
+with assembly code. I also added options to remove &lt;code>.cfi&lt;/code> directives from previous
+example.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">g++ -g -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm -masm&lt;span class="o">=&lt;/span>intel -Wa,-dhln main.cpp &amp;gt; main.lst
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;span class="lnt">45
+&lt;/span>&lt;span class="lnt">46
+&lt;/span>&lt;span class="lnt">47
+&lt;/span>&lt;span class="lnt">48
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl"> 26:main.cpp ****
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 27:main.cpp **** int &lt;span class="nb">test&lt;/span> &lt;span class="o">(&lt;/span>int n&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 28:main.cpp **** &lt;span class="o">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">159&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">28&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">160&lt;/span> &lt;span class="m">0000&lt;/span> F30F1EFA endbr64
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">161&lt;/span> &lt;span class="m">0004&lt;/span> &lt;span class="m">55&lt;/span> push rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">162&lt;/span> .LCFI9:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">163&lt;/span> &lt;span class="m">0005&lt;/span> 4889E5 mov rbp, rsp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">164&lt;/span> .LCFI10:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">165&lt;/span> &lt;span class="m">0008&lt;/span> 897DEC mov DWORD PTR -20&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, edi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 29:main.cpp **** int &lt;span class="nv">total&lt;/span> &lt;span class="o">=&lt;/span> 0&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">166&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">29&lt;/span> &lt;span class="m">7&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">167&lt;/span> 000b C745F800 mov DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">167&lt;/span> &lt;span class="m">000000&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">168&lt;/span> .LBB4:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 30:main.cpp ****
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 31:main.cpp **** &lt;span class="k">for&lt;/span> &lt;span class="o">(&lt;/span>int &lt;span class="nv">i&lt;/span> &lt;span class="o">=&lt;/span> 0&lt;span class="p">;&lt;/span> i &amp;lt; n&lt;span class="p">;&lt;/span> i++&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">169&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">31&lt;/span> &lt;span class="m">12&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">170&lt;/span> &lt;span class="m">0012&lt;/span> C745FC00 mov DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">170&lt;/span> &lt;span class="m">000000&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">171&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">31&lt;/span> &lt;span class="m">3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">172&lt;/span> &lt;span class="m">0019&lt;/span> EB0D jmp .L9
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">173&lt;/span> .L10:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 32:main.cpp **** &lt;span class="nv">total&lt;/span> &lt;span class="o">+=&lt;/span> i * i&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">174&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">32&lt;/span> &lt;span class="m">16&lt;/span> discriminator &lt;span class="m">3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">175&lt;/span> 001b 8B45FC mov eax, DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">176&lt;/span> 001e 0FAFC0 imul eax, eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">177&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">32&lt;/span> &lt;span class="m">11&lt;/span> discriminator &lt;span class="m">3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">178&lt;/span> &lt;span class="m">0021&lt;/span> 0145F8 add DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 31:main.cpp **** &lt;span class="nv">total&lt;/span> &lt;span class="o">+=&lt;/span> i * i&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">179&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">31&lt;/span> &lt;span class="m">3&lt;/span> discriminator &lt;span class="m">3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">180&lt;/span> &lt;span class="m">0024&lt;/span> 8345FC01 add DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>, &lt;span class="m">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">181&lt;/span> .L9:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 31:main.cpp **** &lt;span class="nv">total&lt;/span> &lt;span class="o">+=&lt;/span> i * i&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">182&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">31&lt;/span> &lt;span class="m">21&lt;/span> discriminator &lt;span class="m">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">183&lt;/span> &lt;span class="m">0028&lt;/span> 8B45FC mov eax, DWORD PTR -4&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">184&lt;/span> 002b 3B45EC cmp eax, DWORD PTR -20&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">185&lt;/span> 002e 7CEB jl .L10
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">186&lt;/span> .LBE4:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 33:main.cpp ****
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 34:main.cpp **** &lt;span class="k">return&lt;/span> total&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">187&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">34&lt;/span> &lt;span class="m">10&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">188&lt;/span> &lt;span class="m">0030&lt;/span> 8B45F8 mov eax, DWORD PTR -8&lt;span class="o">[&lt;/span>rbp&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 35:main.cpp **** &lt;span class="o">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">189&lt;/span> .loc &lt;span class="m">1&lt;/span> &lt;span class="m">35&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">190&lt;/span> &lt;span class="m">0033&lt;/span> 5D pop rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">191&lt;/span> .LCFI11:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="m">192&lt;/span> &lt;span class="m">0034&lt;/span> C3 ret
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>However we have those &lt;code>.loc&lt;/code> directives, which are used for debugging, so
+in my view the result of this method looks more messy.&lt;/p>
+&lt;p>Another alternative, would be to use &lt;code>save-temps&lt;/code> option, which will save all
+intermediate files (&lt;code>.s&lt;/code> for assembly output, &lt;code>.i&lt;/code> for preprocessed input file).
+This can be easily added to compiler options in your build tool. The results
+are localted in the build directory, inside the subdirectory for the CMake target.&lt;/p>
+&lt;h3 id="assembly-from-object-file">&lt;a href="#assembly-from-object-file" class="header-anchor">&lt;/a>Assembly from object file
+&lt;/h3>&lt;p>Sometime you may want to see the assembly code from object file. You can use
+&lt;code>objdump&lt;/code> tool for that. For example:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">objdump -d -M intel main.o &amp;gt; deas.out
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Where &lt;code>-d,--disassemble&lt;/code> option tells &lt;code>objdump&lt;/code> to display the assembler code,
+and &lt;code>-M&lt;/code> option tells &lt;code>objdump&lt;/code> to use Intel syntax.&lt;/p>
+&lt;p>Result:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">00000000000012c9 &amp;lt;_Z4testi&amp;gt;:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12c9: f3 0f 1e fa endbr64
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12cd: &lt;span class="m">55&lt;/span> push rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12ce: &lt;span class="m">48&lt;/span> &lt;span class="m">89&lt;/span> e5 mov rbp,rsp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12d1: &lt;span class="m">89&lt;/span> 7d ec mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x14&lt;span class="o">]&lt;/span>,edi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12d4: c7 &lt;span class="m">45&lt;/span> f8 &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>,0x0
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12db: c7 &lt;span class="m">45&lt;/span> &lt;span class="nb">fc&lt;/span> &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> &lt;span class="m">00&lt;/span> mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>,0x0
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12e2: eb 0d jmp 12f1 &amp;lt;_Z4testi+0x28&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12e4: 8b &lt;span class="m">45&lt;/span> &lt;span class="nb">fc&lt;/span> mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12e7: 0f af c0 imul eax,eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12ea: &lt;span class="m">01&lt;/span> &lt;span class="m">45&lt;/span> f8 add DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>,eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12ed: &lt;span class="m">83&lt;/span> &lt;span class="m">45&lt;/span> &lt;span class="nb">fc&lt;/span> &lt;span class="m">01&lt;/span> add DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>,0x1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12f1: 8b &lt;span class="m">45&lt;/span> &lt;span class="nb">fc&lt;/span> mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12f4: 3b &lt;span class="m">45&lt;/span> ec cmp eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x14&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12f7: 7c eb jl 12e4 &amp;lt;_Z4testi+0x1b&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12f9: 8b &lt;span class="m">45&lt;/span> f8 mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12fc: 5d pop rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12fd: c3 ret
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can see (here and in previous examples) that the names of the functions are mangled and not easily readable. However, in &lt;code>objdump&lt;/code> you can use &lt;code>-C&lt;/code> option to demangle the names.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">00000000000012c9 &amp;lt;test&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span>&amp;gt;:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12c9: f3 0f 1e fa endbr64
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 12cd: &lt;span class="m">55&lt;/span> push rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can also see the assembly code of only one function with &lt;code>-disassemble=name&lt;/code> option.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">objdump --disassemble&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;test(int)&amp;#34;&lt;/span> -C -M intel main.o &amp;gt; deassembled_test.out
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Note that without &lt;code>-C&lt;/code> option, the name of the function would have to be mangled.&lt;/p>
+&lt;p>We can also have source codes comments in our assembly with &lt;code>-S&lt;/code> option, but only when the object was compiled with &lt;code>-g&lt;/code> option. Another useful option is &lt;code>--no-show-raw-insn&lt;/code> which doesn&amp;rsquo;t show raw bytes of machine code, &lt;code>-r&lt;/code> which displays relocation entries and &lt;code>-w&lt;/code> option which disables line wrapping of long machine code lines. We can shorten &lt;code>-C -S -r&lt;/code> to &lt;code>-CSr&lt;/code> option.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">objdump --disassemble&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;test(int)&amp;#34;&lt;/span> -CSr --no-show-raw-insn -M intel main.o &amp;gt; deassembled_test_dbg.out
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="m">0000000000001129&lt;/span> &amp;lt;test&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span>&amp;gt;:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">int &lt;span class="nb">test&lt;/span> &lt;span class="o">(&lt;/span>int n&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="o">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1129: endbr64
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 112d: push rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 112e: mov rbp,rsp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1131: mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x14&lt;span class="o">]&lt;/span>,edi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> int &lt;span class="nv">total&lt;/span> &lt;span class="o">=&lt;/span> 0&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1134: mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>,0x0
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="o">(&lt;/span>int &lt;span class="nv">i&lt;/span> &lt;span class="o">=&lt;/span> 0&lt;span class="p">;&lt;/span> i &amp;lt; n&lt;span class="p">;&lt;/span> i++&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 113b: mov DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>,0x0
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1142: jmp &lt;span class="m">1151&lt;/span> &amp;lt;test&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span>+0x28&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nv">total&lt;/span> &lt;span class="o">+=&lt;/span> i * i&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1144: mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1147: imul eax,eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 114a: add DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>,eax
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="o">(&lt;/span>int &lt;span class="nv">i&lt;/span> &lt;span class="o">=&lt;/span> 0&lt;span class="p">;&lt;/span> i &amp;lt; n&lt;span class="p">;&lt;/span> i++&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 114d: add DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>,0x1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1151: mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x4&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1154: cmp eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x14&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1157: jl &lt;span class="m">1144&lt;/span> &amp;lt;test&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span>+0x1b&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> total&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 1159: mov eax,DWORD PTR &lt;span class="o">[&lt;/span>rbp-0x8&lt;span class="o">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="o">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 115c: pop rbp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> 115d: ret
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="when-using-cmake">&lt;a href="#when-using-cmake" class="header-anchor">&lt;/a>When using CMake
+&lt;/h3>&lt;p>CMake creates targets for each &lt;code>.cpp&lt;/code> file. Targets are named the same as the source file, but with different extension. There are targets for:&lt;/p>
+&lt;ul>
+&lt;li>assembly code before passed to assembler, with &lt;code>.s&lt;/code> extension,&lt;/li>
+&lt;li>preprocessed source code, with &lt;code>.i&lt;/code> extension.&lt;/li>
+&lt;/ul>
+&lt;p>It is important to note, that when using many &lt;code>CMake&lt;/code> subdirectories the targets are created in the &lt;a class="link" href="https://cmake.org/cmake/help/latest/command/add_subdirectory.html" target="_blank" rel="noopener"
+>&lt;code>binary_dir&lt;/code>&lt;/a> of the target&amp;rsquo;s &lt;code>CMakeLists.txt&lt;/code> and not the base build directory.
+So if you would like to generate assembly code for a target &lt;code>src/foo/bar/fun.cpp&lt;/code> you would run &lt;code>make src/foo/bar/fun.s&lt;/code>
+from the appropriate build directory.&lt;/p>
+&lt;p>We can see that the generated assembly code is not very readable, beacause we have the same problems as with the previous examples. Fortunately, we can modify flags for the target with &lt;code>CMAKE_CXX_CREATE_ASSEMBLY_SOURCE&lt;/code> variable, which is not documented but works.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cmake" data-lang="cmake">&lt;span class="line">&lt;span class="cl">&lt;span class="nb">set&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">CMAKE_CXX_CREATE_ASSEMBLY_SOURCE&lt;/span> &lt;span class="s2">&amp;#34;&amp;lt;CMAKE_CXX_COMPILER&amp;gt; $(CXX_DEFINES) $(CXX_INCLUDES) ${CMAKE_CXX_FLAGS} -S -fverbose-asm -fno-asynchronous-unwind-tables -fno-exceptions -masm=intel &amp;lt;SOURCE&amp;gt; -o &amp;lt;ASSEMBLY_SOURCE&amp;gt;&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The names are still mangled, but we can demangle them with some auxiliary tool.
+Besides that, I have encountered strange bug, that &lt;code>add_compile_options&lt;/code> command did not add options to the assembly target (maybe because it was redefined later)
+and as a consequence the assemblies targets were compiled with different flags than the release build we wanted to optimize. Also be careful to run these &lt;code>.s&lt;/code> and &lt;code>.i&lt;/code> targets
+without defining &lt;code>CMAKE_CXX_CREATE_ASSEMBLY_SOURCE&lt;/code> flags explicitly, as in my case they included both the debug build flags and the release build flags.&lt;/p>
+&lt;p>Futher reading:&lt;/p>
+&lt;ul>
+&lt;li>&lt;a class="link" href="https://www.systutorials.com/generate-a-mixed-source-and-assembly-listing-using-gcc/" target="_blank" rel="noopener"
+>https://www.systutorials.com/generate-a-mixed-source-and-assembly-listing-using-gcc/&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://stackoverflow.com/questions/69028715/include-external-header-file-for-c-on-compiler-explorer" target="_blank" rel="noopener"
+>https://stackoverflow.com/questions/69028715/include-external-header-file-for-c-on-compiler-explorer&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output" target="_blank" rel="noopener"
+>https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>One Word on Copy Constructors</title><link>https://wojtek-rz.github.io/p/one-word-on-copy-constructors/</link><pubDate>Fri, 13 Sep 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/one-word-on-copy-constructors/</guid><description>&lt;p>Let&amp;rsquo;s say we have this C++ class with all five constructors:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">class&lt;/span> &lt;span class="nc">Foo&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">private&lt;/span>&lt;span class="o">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">int&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span>&lt;span class="o">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Default constructor
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">:&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">}&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;An object was created.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">const&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Copy constructor called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Move constructor called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span> &lt;span class="k">operator&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">const&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Copy assignment operator called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">return&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span> &lt;span class="k">operator&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Move assignment operator called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">return&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Destructor
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="o">~&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;An object was destroyed.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Now, let&amp;rsquo;s examine this piece of code:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">Foo&lt;/span> &lt;span class="nf">createNewFooObject&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">auto&lt;/span> &lt;span class="n">foo&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">createNewFooObject&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What output will the program produce? How often will the copy constructor be invoked?&lt;/p>
+&lt;p>Unfortunately, C++17 doesn&amp;rsquo;t specify it clearly. Possible outputs include:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>When I ran this code, the output was the first option. None of the copy constructors were called. So what rule governs this behavior?&lt;/p>
+&lt;h1 id="copy-elision">&lt;a href="#copy-elision" class="header-anchor">&lt;/a>Copy Elision
+&lt;/h1>&lt;p>The C++ compiler uses a technique called &lt;strong>copy elision&lt;/strong>.
+It ensures that if some calls to copy constructors can be avoided, they are.
+But first, let&amp;rsquo;s understand when a copy constructor is invoked.&lt;/p>
+&lt;h2 id="when-the-copy-constructor-is-called">&lt;a href="#when-the-copy-constructor-is-called" class="header-anchor">&lt;/a>When the Copy Constructor is Called
+&lt;/h2>&lt;blockquote>
+&lt;p>The copy constructor is called whenever an object is initialized (by &lt;strong>direct-initialization&lt;/strong> or &lt;strong>copy-initialization&lt;/strong>) from another object of the same type (unless overload resolution selects a better match or the call is elided), which includes.
+&amp;ndash; &lt;cite>&lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_constructor" target="_blank" rel="noopener"
+>cppreference&lt;/a>&lt;/cite>&lt;/p>
+&lt;/blockquote>
+&lt;p>While direct initialization is straightforward, initializing an object from an explicit set of constructor arguments (e.g., &lt;code>T object(arg1, arg2, ...);&lt;/code>), copy-initialization is more nuanced. According to &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_initialization" target="_blank" rel="noopener"
+>cppreference&lt;/a>, there are several scenarios:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>T object = other;&lt;/code> - A named variable is declared with an equal sign.&lt;/li>
+&lt;li>&lt;code>f(other)&lt;/code> - Passing an argument to a function by value.&lt;/li>
+&lt;li>&lt;code>return other;&lt;/code> - Returning from a function that returns by value.&lt;/li>
+&lt;li>&lt;code>throw object; catch (T object)&lt;/code> - Throwing or catching an exception by value.&lt;/li>
+&lt;/ol>
+&lt;p>In the first code snippet, two copy constructors should be called: the first when returning from a function (3) and the second when declaring a variable with an equal sign (1).&lt;/p>
+&lt;h2 id="are-there-guarantees">&lt;a href="#are-there-guarantees" class="header-anchor">&lt;/a>Are There Guarantees?
+&lt;/h2>&lt;p>Since C++17, there’s something called &lt;strong>guaranteed copy elision&lt;/strong>.
+It states:&lt;/p>
+&lt;blockquote>
+&lt;p>Since C++17, a prvalue is not materialized until needed, and then it is constructed directly into the storage of its final destination.
+&amp;ndash; &lt;cite>&lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_elision" target="_blank" rel="noopener"
+>cppreference&lt;/a>&lt;/cite>&lt;/p>
+&lt;/blockquote>
+&lt;p>It means, that even when the syntax suggests a copy constructor should be called, but the value that is the source of the copy is a prvalue,
+the compiler can optimize it away. The result is just a single constructor call in the final destination.&lt;/p>
+&lt;p>The documentation provides two examples of this guarantee:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>When initializing an object in a return statement with a prvalue:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">return&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This optimization was earlier called URVO - &amp;ldquo;unnamed return value optimization&amp;rdquo; and was a common optimization even before C++17, but is now a part of the standard.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>During object initialization when the initializer expression is a prvalue:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">Foo&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">}}};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here, the fact that the constructors are chained together doesn&amp;rsquo;t matter.
+It&amp;rsquo;s worth noting that &amp;ldquo;move&amp;rdquo; assignments are elided, not &amp;ldquo;copy&amp;rdquo;.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>Beyond that, the standard also specifies situations where the compiler &lt;strong>may&lt;/strong> apply copy elision but isn’t obligated to, such as:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>return&lt;/code> statements with a named operand.
+This optimization is called NRVO - &amp;ldquo;named return value optimization&amp;rdquo; and example of that was in the first code snippet.
+As we saw, most compilers implement this optimization, but it’s not mandatory.&lt;/li>
+&lt;li>Object initialization from a temporary.&lt;/li>
+&lt;li>&lt;code>throw&lt;/code> expressions with a named operand.&lt;/li>
+&lt;li>Exception handlers.&lt;/li>
+&lt;/ol>
+&lt;p>For more details, check &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_elision" target="_blank" rel="noopener"
+>cppreference&lt;/a>.&lt;/p>
+&lt;p>With the introduction of move semantics in C++11, the compiler can also elide move constructors the same way it does with copy constructors.
+{:.notice&amp;ndash;info}&lt;/p>
+&lt;h2 id="some-strange-example">&lt;a href="#some-strange-example" class="header-anchor">&lt;/a>Some strange example
+&lt;/h2>&lt;p>The compilers can be easily tricked when it comes to copy elision.&lt;/p>
+&lt;p>Take this code for example:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">throwFoo&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">foo&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">printX&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">throw&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">try&lt;/span>&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">throwFoo&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span> &lt;span class="k">catch&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">){&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">foo&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">printX&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Caught an exception&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The result is:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">created&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">5&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">A&lt;/span> &lt;span class="n">move&lt;/span> &lt;span class="n">constructor&lt;/span> &lt;span class="n">called&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">A&lt;/span> &lt;span class="n">copy&lt;/span> &lt;span class="n">constructor&lt;/span> &lt;span class="n">called&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">1600677166&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Caught&lt;/span> &lt;span class="n">an&lt;/span> &lt;span class="n">exception&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The code compiled without any warnings or errors.
+The output is unexpected, as the object is destroyed and then copied.
+If there are any rules in the C++ that says I can&amp;rsquo;t do that, they are not easy to find.
+C++ reference only says &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/throw" target="_blank" rel="noopener"
+>about the exception throwing&lt;/a>:&lt;/p>
+&lt;blockquote>
+&lt;p>Let &lt;code>ex&lt;/code> be the conversion result:&lt;/p>
+&lt;ul>
+&lt;li>The exception object is copy-initialized from &lt;code>ex&lt;/code>.&lt;/li>
+&lt;/ul>
+&lt;/blockquote>
+&lt;p>The exepction object wasn&amp;rsquo;t copy-initialized, but moved-initialized and produced an undifined behavior.
+If we changed the catch parameter to &lt;code>const Foo&amp;amp; foo&lt;/code>, the output would be very simmiliar but the reported x value would be &lt;code>0&lt;/code>.
+If we would change &lt;code>throw foo;&lt;/code> to &lt;code>throw Foo{5};&lt;/code>, the move would be elided.&lt;/p>
+&lt;p>Maybe the conclusion is to always use &lt;code>throw&lt;/code> with a temporary object, not a named one.&lt;/p>
+&lt;h1 id="summary">&lt;a href="#summary" class="header-anchor">&lt;/a>Summary
+&lt;/h1>&lt;p>Before C++17, copy elision was an optimization that compilers could apply, but it wasn&amp;rsquo;t guaranteed.
+It could generate different results depending on the compiler and optimization level (like debug/release mode).
+It&amp;rsquo;s worth noting that the code that relies on possible optimizations like &amp;ldquo;named return value optimization&amp;rdquo; is not portable
+and can produce different results on different compilers.&lt;/p></description></item><item><title>From Code to Execution: Running Haskell Programs on the Web</title><link>https://wojtek-rz.github.io/p/from-code-to-execution-running-haskell-programs-on-the-web/</link><pubDate>Mon, 12 Aug 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/from-code-to-execution-running-haskell-programs-on-the-web/</guid><description>&lt;p>Have you ever had the feeling that you have written a cool script or program and you want to show it to the world? If so, then what would be the best way
+to show it to everyone? I always think about two aspects of a good demo.
+The first one is whether potential user can experience and play with your software.
+The second one how much effort the potential user has to put in to load and configure
+your software.&lt;/p>
+&lt;p>One of the best ways to present your software is to embbed it inside web application.
+That way, there is no downloading the codebase (explicitely) and no configuration for the user.
+Someone can just enter the website and start toying with your programs - great example is
+&lt;a class="link" href="https://huggingface.co/" target="_blank" rel="noopener"
+>huggingface&lt;/a> where we can play with the models from the frontend UI.&lt;/p>
+&lt;p>Here I focus on programs with command line interface to communicate with the world.
+Some time ago I created an interpreter of the programming language of my invention - &lt;a class="link" href="https://github.com/wojtek-rz/mim-projekty/tree/main/Programming%20languages%20and%20paradigms/Emilia%20Programming%20Language" target="_blank" rel="noopener"
+>Emilia
+Programming Language&lt;/a>. It is written
+in Haskell and uses CLI to communicate with the world. The online demo can be found &lt;a class="link" href="https://wojteks-misc-files.pages.dev/" target="_blank" rel="noopener"
+>here&lt;/a> - note that it needs a couple of seconds to load (it&amp;rsquo;s one of the downsides of Webassembly&amp;hellip;).&lt;/p>
+&lt;p>I want to embed my Haskell interpreter on a website. I could do this by creating backend service on a &amp;ldquo;compute instance&amp;rdquo; in the cloud that would run the Emilia executable, but I would like to avoid that cost, to keep the demo as cheap as possible for me.&lt;/p>
+&lt;h2 id="thing-about-webassembly">&lt;a href="#thing-about-webassembly" class="header-anchor">&lt;/a>Thing about WebAssembly
+&lt;/h2>&lt;p>Actually there is a way to do all the computation on the client side. And I don&amp;rsquo;t have to rewrite all interpreter to Javascript to do that. The answer is &lt;strong>WebAssembly&lt;/strong>.&lt;/p>
+&lt;p>It is a low -evel programming code with assebmler-like instruction set designed for near-native performance. Web browsers implement WebAssembly interpreters and compilers, allowing for much faster execution than Javascript.
+Many programming language compilers and their extensions allow compilation to
+WebAssembly in addition to compilation to machine code. (Clang, Go, Haskell).&lt;/p>
+&lt;p>Note that this is only the concise tutorial of the steps I had to take in my project.
+If you&amp;rsquo;re not fammilliar with WebAssembly you won&amp;rsquo;t find detailed explanation of all the concepts here.&lt;/p>
+&lt;h2 id="compiling-haskell-to-webassembly">&lt;a href="#compiling-haskell-to-webassembly" class="header-anchor">&lt;/a>Compiling Haskell to WebAssembly
+&lt;/h2>&lt;p>The first thing I had to do was to compile haskell into wasm (WebAssembly), which
+is probably a thing only a handful of developers have done. Fortunately the creators
+of Haskell compiler (GHC) have created a GHC backend that compiles to wasm. The official
+tutorial is available &lt;a class="link" href="https://ghc.gitlab.haskell.org/ghc/doc/users_guide/wasm.html" target="_blank" rel="noopener"
+>here&lt;/a> and you can download the project &lt;a class="link" href="https://gitlab.haskell.org/ghc/ghc-wasm-meta" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/p>
+&lt;p>After running the instalation script all the tools should be available inside
+&lt;code>~/.ghc-wasm&lt;/code>. You should run &lt;code>source ~/.ghc-wasm/env&lt;/code> to add the tools and
+environment variables to &lt;code>PATH&lt;/code>. Then instead of &lt;code>ghc&lt;/code>, &lt;code>ghc-pkg&lt;/code>, &lt;code>hsc2hs&lt;/code> you should use their alternative versions &lt;code>wasm32-wasi-ghc&lt;/code>, &lt;code>wasm32-wasi-ghc-pkg&lt;/code>
+and &lt;code>wasm32-wasi-hsc2hs&lt;/code>. There is also wrapper for cabal that uses wasm backend for compiling and linking the code: &lt;code>wasm32-wasi-cabal&lt;/code>.&lt;/p>
+&lt;p>My project was written with &lt;code>cabal&lt;/code> building tool, so instead of &lt;code>cabal build emilia-lang-exe&lt;/code> I write:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">wasm32-wasi-cabal build emilia-lang-exe
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Make sure that your project uses one thread for execution (rts -N option),
+otherwise the project won&amp;rsquo;t compile.
+{:.notice&amp;ndash;warning}&lt;/p>
+&lt;p>Then you can find the compiled wasm binary inside by running &lt;code>cabal list-bin exe:emilia-lang-exe&lt;/code>, and copy it to our current workplace.&lt;/p>
+&lt;p>As a result we obtained &lt;code>emilia-lang-exe.wasm&lt;/code> binary file written in WebAssembly.
+You can run it with wasm runtime, a separate program, like &lt;code>wasmtime&lt;/code> that
+came with the &lt;code>wasm-ghc&lt;/code> and should be in your path.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">wasmtime run emilia-lang-exe.wasm --help
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">Usage: emilia-lang-exe &amp;lt;file&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> emilia-lang-exe --repl
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> emilia-lang-exe
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">If no file is provided, executable will read from stdin.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>You can also run this file in the browser and this is what we are going to do.&lt;/p>
+&lt;h2 id="running-webassembly-binary-in-the-browser">&lt;a href="#running-webassembly-binary-in-the-browser" class="header-anchor">&lt;/a>Running WebAssembly binary in the browser
+&lt;/h2>&lt;p>Moderm browsers come with the wasm interpreter out of the box. But our CLI binary requires one more thing to run, that is IO interface, a way to communicate with the external world. This was build in the &lt;code>wasmtime&lt;/code> interpreter that we already used. Along with some other useful things like: file operations, time and random utilities they create a set of functions called a &lt;strong>runtime&lt;/strong>.&lt;/p>
+&lt;p>We need a bridge that would connect external world to our program. The most established one is called &lt;a class="link" href="https://docs.wasmer.io/sdk/wasmer-js" target="_blank" rel="noopener"
+>Wasmer&lt;/a>.&lt;/p>
+&lt;p>The easiest way is to create a node project with bundler, for example with Vite.
+After creating you have to install &lt;code>wasmer-sdk&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">npm install -S @wasmer/sdk
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Then you can import it inside main javascript (typescript) file, for example &lt;code>index.ts&lt;/code> and use it. On the official website there is simple example of how to
+use Python binary:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">init&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">Wasmer&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s2">&amp;#34;@wasmer/sdk&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">await&lt;/span> &lt;span class="nx">init&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">pkg&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="nx">Wasmer&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">fromRegistry&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;python/python@3.12&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">instance&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="nx">pkg&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">entrypoint&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">run&lt;/span>&lt;span class="p">({&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">args&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;-c&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;print(&amp;#39;Hello, World!&amp;#39;)&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">code&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">stdout&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="nx">instance&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">wait&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">console&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">log&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="sb">`Python exited with &lt;/span>&lt;span class="si">${&lt;/span>&lt;span class="nx">code&lt;/span>&lt;span class="si">}&lt;/span>&lt;span class="sb">: &lt;/span>&lt;span class="si">${&lt;/span>&lt;span class="nx">stdout&lt;/span>&lt;span class="si">}&lt;/span>&lt;span class="sb">`&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In our use case we would like to emulate terminal in the browser. The program that would be executed inside it is &lt;code>emilia-lang-exe&lt;/code> binary.&lt;/p>
+&lt;h2 id="creating-terminal-frontend">&lt;a href="#creating-terminal-frontend" class="header-anchor">&lt;/a>Creating terminal frontend
+&lt;/h2>&lt;p>There is altready javascript library that generates component with nice looking UI and handy functions and is
+calld &lt;a class="link" href="https://xtermjs.org/" target="_blank" rel="noopener"
+>xterm&lt;/a>. To install the npm module:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">npm install @xterm/xterm
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Add to &lt;code>index.html&lt;/code> file the following content:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">&amp;lt;!doctype html&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;html lang=&amp;#34;en&amp;#34;&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;head&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;meta charset=&amp;#34;UTF-8&amp;#34;&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;meta name=&amp;#34;viewport&amp;#34; content=&amp;#34;width=device-width, initial-scale=1.0&amp;#34;&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;title&amp;gt;Wasmer Shell&amp;lt;/title&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;script type=&amp;#34;module&amp;#34; defer src=&amp;#34;index.ts&amp;#34;&amp;gt;&amp;lt;/script&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;/head&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;body&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &amp;lt;div id=&amp;#34;terminal&amp;#34;&amp;gt;&amp;lt;/div&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;/body&amp;gt;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&amp;lt;/html&amp;gt;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>It will load the &lt;code>index.ts&lt;/code> file with our script.&lt;/p>
+&lt;p>Inside of it we would like to download the binary from url:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="nx">type&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">Instance&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s2">&amp;#34;@wasmer/sdk&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// This will save in url variable path to static file with the wasm binary
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="kr">import&lt;/span> &lt;span class="nx">url&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s2">&amp;#34;./emilia-lang-exe.wasm?url&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">init&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">initializeLogger&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">runWasix&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="kr">import&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;@wasmer/sdk&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">await&lt;/span> &lt;span class="nx">init&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">module&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="nx">WebAssembly&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">compileStreaming&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">fetch&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">url&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">instance&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="kr">await&lt;/span> &lt;span class="nx">runWasix&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">module&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">program&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s2">&amp;#34;emilia-lang-exe&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">args&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;--repl&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>To connect instances input and output to terminal&amp;rsquo;s intput and output we need helper function:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">function&lt;/span> &lt;span class="nx">connectStreams&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">instance&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="nx">Instance&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">term&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="nx">Terminal&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">const&lt;/span> &lt;span class="nx">stdin&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">instance&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">stdin&lt;/span>&lt;span class="o">?&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">getWriter&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">onData&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">bufforDoubleEnter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">data&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span> &lt;span class="nx">stdin&lt;/span>&lt;span class="o">?&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">write&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">encoder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">encode&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">data&lt;/span>&lt;span class="p">)),&lt;/span> &lt;span class="nx">term&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">instance&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">stdout&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">pipeTo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">new&lt;/span> &lt;span class="nx">WritableStream&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="nx">write&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="nx">chunk&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span> &lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">write&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">chunk&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">}));&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">instance&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">stderr&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">pipeTo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">new&lt;/span> &lt;span class="nx">WritableStream&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="nx">write&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="nx">chunk&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span> &lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">write&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">chunk&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">}));&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Initialization of the terminal addon:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="s2">&amp;#34;xterm/css/xterm.css&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">Terminal&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s1">&amp;#39;@xterm/xterm&amp;#39;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">WebLinksAddon&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s1">&amp;#39;@xterm/addon-web-links&amp;#39;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">term&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="nx">Terminal&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="nx">cursorBlink&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="kc">true&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">convertEol&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="kc">true&lt;/span> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">open&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">document&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">getElementById&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;terminal&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">loadAddon&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">new&lt;/span> &lt;span class="nx">WebLinksAddon&lt;/span>&lt;span class="p">());&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">writeln&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;Starting...&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>And to connect the instance to the terminal we our helper function:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="nx">connectStreams&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">instance&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">term&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="problems">&lt;a href="#problems" class="header-anchor">&lt;/a>Problems
+&lt;/h3>&lt;p>After we put everything together we see some major problems. After presssing &amp;ldquo;Enter&amp;rdquo; the console is not creating the new line, nor it is sending the line to the
+interpreter. &amp;ldquo;Backspace&amp;rdquo; also doesn&amp;rsquo;t work.&lt;/p>
+&lt;p>After some digging it appears that there exists something called &lt;a class="link" href="https://en.wikipedia.org/wiki/Line_discipline" target="_blank" rel="noopener"
+>line discipline&lt;/a> and it&amp;rsquo;s main tasks include:&lt;/p>
+&lt;blockquote>
+&lt;p>For example, the standard line discipline processes the data it receives from the hardware driver and from applications writing to the device according to the requirements of a terminal on a Unix-like system. On input, it handles special characters such as the interrupt character (typically Control-C) and the erase and kill characters (typically backspace or delete, and Control-U, respectively) and, on output, it replaces all the LF characters with a CR/LF sequence.&lt;/p>
+&lt;/blockquote>
+&lt;p>Our problem can be solved by &lt;a class="link" href="https://github.com/mame/xterm-pty?tab=readme-ov-file" target="_blank" rel="noopener"
+>xterm-pty&lt;/a> module.&lt;/p>
+&lt;p>A PTY, or pseudoterminal, is an intermediate layer between a process and a terminal. It is not just a pipe, but provides several useful functionalities such as input echo, line editing, conversion, etc. PTY is essential for running real-world CUI programs.&lt;/p>
+&lt;p>Usually, xterm.js is used with node-pty. Because node-pty is a binding for the PTY functions provided by the operating system, it does not work on a browser. On the other hand, xterm-pty works on a browser because it has an own implementation of simple Linux-like line discipline.&lt;/p>
+&lt;p>To add it to our project we have to install the node module:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">npm i xterm-pty
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Then we add the following lines:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">import&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">openpty&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="nx">from&lt;/span> &lt;span class="s2">&amp;#34;xterm-pty&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="nx">master&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">slave&lt;/span> &lt;span class="p">}&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">openpty&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">term&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">loadAddon&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">master&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">slave&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">write&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;Starting...\n&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// instance initalization...
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">connectStreams&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">instance&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">slave&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="hosting">&lt;a href="#hosting" class="header-anchor">&lt;/a>Hosting
+&lt;/h2>&lt;p>After running&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">npm run build
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>to build the static website, the result can be available &lt;a class="link" href="https://wojteks-misc-files.pages.dev/" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/p>
+&lt;p>The wasmer sdk library doesn&amp;rsquo;t work out of the box. It uses javascript&amp;rsquo;s &lt;code>sharedArrayBuffer&lt;/code> to communicate between threads and most browsers block this functionality, unless the headers
+&lt;code>Cross-Origin-Opener-Policy: same-origin&lt;/code> and &lt;code>Cross-Origin-Embedder-Policy: require-corp&lt;/code> are present.
+{:.notice&amp;ndash;warning}&lt;/p>
+&lt;p>All in all, it was a complicated trip, but every problem was solved in the end.
+I certainly learned a lot along the way.&lt;/p>
+&lt;p>Thanks for reading,
+Wojtek&lt;/p></description></item><item><title>Global variables in Haskell with MonadReader!</title><link>https://wojtek-rz.github.io/p/global-variables-in-haskell-with-monadreader/</link><pubDate>Sat, 30 Mar 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/global-variables-in-haskell-with-monadreader/</guid><description>&lt;h1 id="what-is-monad-reader-in-haskell">&lt;a href="#what-is-monad-reader-in-haskell" class="header-anchor">&lt;/a>What is Monad Reader in Haskell?
+&lt;/h1>&lt;p>Understanding the &lt;code>MonadReader&lt;/code> class in Haskell can be challenging.
+Online tutorials often focus on implementation details rather than its purpose and usefulness.
+By the end of this post, you&amp;rsquo;ll have a clear understanding of how MonadReader streamlines
+environment passing in Haskell, making your code cleaner and more maintainable.&lt;/p>
+&lt;h3 id="motivation">&lt;a href="#motivation" class="header-anchor">&lt;/a>Motivation
+&lt;/h3>&lt;p>The term &amp;lsquo;monad reader&amp;rsquo; comes from the idea that all functions read from a common source.&lt;/p>
+&lt;p>For example, suppose you have a global configuration variable that several functions read from.
+By using a MonadReader, you can avoid passing that configuration as an argument to each function.
+The result of our monad would be a function takes this global variable as an argument and
+then passes it to each function within it.&lt;/p>
+&lt;p>Here is a simple example. Suppose we are calculating the total cost of a trip to Europe.
+We visit three countries, each with its own currency:
+GBP in the UK, EUR in France and CHF in Switzerland.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">type&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kt">String&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;EUR&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">4.3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;GBP&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">4.9&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;CHF&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">3.9&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We want to pass a dictionary of currency rates to any function that needs them.
+The functions can have different numbers of arguments,
+but they have one thing in common - &lt;strong>the last argument is of type &lt;code>ExchangeRate&lt;/code>&lt;/strong>.
+(the implementation is not important here).&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getSwitzerlandCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Int&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getSwitzerlandCost&lt;/span> &lt;span class="n">days&lt;/span> &lt;span class="n">nightCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">fromIntegral&lt;/span> &lt;span class="n">days&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">nightCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;CHF&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getUKCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getUKCost&lt;/span> &lt;span class="n">flightCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">2.0&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">flightCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;GBP&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getFranceCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getFranceCost&lt;/span> &lt;span class="n">distance&lt;/span> &lt;span class="n">fuelCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">2.0&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">distance&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">fuelCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;EUR&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Calculating the total cost is now straightforward:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span> &lt;span class="ow">=&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">let&lt;/span> &lt;span class="n">switzerlandCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getSwitzerlandCost&lt;/span> &lt;span class="mi">7&lt;/span> &lt;span class="mf">100.0&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ukCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">franceCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getFranceCost&lt;/span> &lt;span class="mf">1000.0&lt;/span> &lt;span class="mf">1.5&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">in&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">switzerlandCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">ukCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">franceCost&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Maybe we could get rid of the repetitive &lt;code>exchangeRateToPln&lt;/code>? That&amp;rsquo;s what
+Monad Reader does. It hides the last argument of each function call,
+so that it behaves like an abstract global variable that is passed unchanged to every
+to any function in our monad. It is often called the &lt;code>config&lt;/code> or &lt;code>environment&lt;/code> argument.
+The syntax of our monad is as follows:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">switzerlandCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getSwitzerlandCost&lt;/span> &lt;span class="mi">7&lt;/span> &lt;span class="mf">100.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ukCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">franceCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getFranceCost&lt;/span> &lt;span class="mf">1000.0&lt;/span> &lt;span class="mf">1.5&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">switzerlandCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">ukCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">franceCost&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What if we want to write something like &lt;code>gifts &amp;lt;- 100&lt;/code>? The &lt;code>100&lt;/code> is a value,
+not a function that takes &lt;code>ExchangeRate&lt;/code> as its last argument. We would write
+&lt;code>gifts &amp;lt;- return 100&lt;/code> and that&amp;rsquo;s the monadic way to do it.&lt;/p>
+&lt;p>Believe it or not, but in the last code example we actually used a MonadReader.
+The monadic type here is &lt;code>ExchangeRate -&amp;gt; Double&lt;/code>, but we can abstract away
+the implementation details here and write it with the &lt;code>Reader&lt;/code> constructor
+from &lt;code>Control.Monad.Reader&lt;/code> library:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- is the same as&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- in general:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- Reader Env(last argument of functions / environment) Value(return value of the monad) &lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What if we want to store &lt;code>Environment&lt;/code> value in a &amp;ldquo;variable&amp;rdquo;? That&amp;rsquo;s what identity function does:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">exchangeRate&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nf">\&lt;/span>&lt;span class="n">x&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can also run some function with changed environment. The most popular use case is when writing interpreters,
+but let&amp;rsquo;s say we want to calculate the cost of our trip if the economic crisis were to hit.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">changeToCrisisRates&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">changeToCrisisRates&lt;/span> &lt;span class="n">rates&lt;/span> &lt;span class="n">currency&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mi">2&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rates&lt;/span> &lt;span class="n">currency&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCostWhenCrisis&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCostWhenCrisis&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">rates&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">id&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">calculateTotalCost&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">changeToWarRates&lt;/span> &lt;span class="n">rates&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here we have a function that changes the environment &lt;code>changeToCrisisRates :: ExchangeRate -&amp;gt; ExchangeRate&lt;/code>
+and we run the &lt;code>calculateTotalCost&lt;/code> calculation with the modified environment.&lt;/p>
+&lt;p>These two applications are so common,
+that they deserve separate functions within the MonadReader class:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">ask&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Env&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- monad that returns Env&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">local&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Env&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Val&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Val&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- Given a function to modify Env and current calculation,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- return calculation that would run with modified Env.&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Type &lt;code>Env&lt;/code> denotes the environment type, which in our example
+is &lt;code>ExchangeRate&lt;/code>.&lt;/p>
+&lt;p>Another useful function is &lt;code>asks&lt;/code> which helps with the problem: what if I want to get
+only part of Env, not the whole Env.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">asks&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- given Env selector, create calculation that &lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- runs selector on Env and returns the value&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="implementation-details">&lt;a href="#implementation-details" class="header-anchor">&lt;/a>Implementation details
+&lt;/h3>&lt;p>Let&amp;rsquo;s try to implement this monad. What is a monadic type here?
+Remember, that left arrow &lt;code>&amp;lt;-&lt;/code> notation is a syntax for &lt;code>&amp;gt;&amp;gt;=&lt;/code> with lambda expressions:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">value&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">value&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- is equal to&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nf">\&lt;/span>&lt;span class="n">value&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">return&lt;/span> &lt;span class="n">value&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>So &lt;code>getUKCost 200.0&lt;/code> is of type &lt;code>ExchangeRate -&amp;gt; Double&lt;/code> which should be our monadic
+value. More generally, if &lt;code>m&lt;/code> is our monad we would like to have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">m a == Env -&amp;gt; a
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>So here, the monad is a function, that takes environment and returns a value.
+A useful interpetation is that monads are containers for some values.
+How can a function be a container? Actually, if we have a function `_ -&amp;gt; 10&amp;rsquo;
+then no matter what we give it as an argument we will get 10.
+This makes it 100% certain to hold the value 10. How do we chain such monads?
+We would like to implement bind function with type:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;=&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;=&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>It takes a monadic value with type &lt;code>m a&lt;/code> and passed the value &lt;code>a&lt;/code> to the function,
+which returns the monadic value &lt;code>m b&lt;/code>. But to get value &lt;code>a&lt;/code> from monad
+&lt;code>Env -&amp;gt; a&lt;/code> we have to pass &lt;code>Env&lt;/code>. And that&amp;rsquo;s exacly how we implement it:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">h&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="n">w&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">h&lt;/span> &lt;span class="n">w&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">w&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We get the value from &lt;code>h&lt;/code> with &lt;code>h w&lt;/code> and pass it to &lt;code>f&lt;/code>. Because the result of bind
+must also have monadic value &lt;code>m b == Env -&amp;gt; b&lt;/code>, and the result of &lt;code>f&lt;/code> is a value
+inside the function container, we have to pass again &lt;code>w&lt;/code> to the result &lt;code>f (h w)&lt;/code> to
+get the value inside the monad.&lt;/p>
+&lt;p>And even pure arithmetic has an interesting interpretation. It is a calculation
+that ignores the result and always returns the value.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">return&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="kr">_&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In many places you will see such implementation:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">instance&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="p">((&lt;/span>&lt;span class="ow">-&amp;gt;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">r&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="kr">_&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">x&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">h&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="n">w&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">h&lt;/span> &lt;span class="n">w&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">w&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>where the most confusing part is this &lt;code>((-&amp;gt;) r)&lt;/code>. This is type constructor which
+is missing the argument - value it will take. With list monad we have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">instance&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="kt">[]&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">xs&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">concat&lt;/span> &lt;span class="o">$&lt;/span> &lt;span class="n">map&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="n">xs&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>and &lt;code>[]&lt;/code> is a constructor that is also missing value. For example if we write &lt;code>[] Int&lt;/code>,
+we give the type constructor &lt;code>[]&lt;/code> type &lt;code>Int&lt;/code> and the result is &lt;code>[Int]&lt;/code>. So we can say that
+&lt;code>[]&lt;/code> is of &lt;em>kind&lt;/em> &lt;code>* -&amp;gt; *&lt;/code>, where &lt;code>*&lt;/code> is a type. Even more, &lt;code>(-&amp;gt;) r&lt;/code> is also a type
+constructor of kind &lt;code>* -&amp;gt; *&lt;/code>. If we give it the type &lt;code>String&lt;/code> we get &lt;code>(-&amp;gt;) r String&lt;/code> which
+can be also written as &lt;code>r -&amp;gt; String&lt;/code>. In the Haskell documentation, &lt;code>m = (-&amp;gt;) r&lt;/code>, so &lt;code>m&lt;/code>
+is a monad type constructor. Therefore &lt;code>m a&lt;/code> expands to &lt;code>r -&amp;gt; a&lt;/code>.&lt;/p>
+&lt;p>Useful exercises are writing &lt;code>functor&lt;/code> and &lt;code>applicative&lt;/code> instances for the monad function,
+as well as &lt;code>ask&lt;/code> and &lt;code>local&lt;/code> functions (I explained what they do in the previous section).
+These implementations are:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">class&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="ow">=&amp;gt;&lt;/span> &lt;span class="kt">MonadReader&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="o">|&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ask&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="c1">-- we now now that m r expands to r -&amp;gt; r, so only id fits&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ask&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">id&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">r&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">r&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="n">previousReader&lt;/span> &lt;span class="n">env&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">previousReader&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">f&lt;/span> &lt;span class="n">env&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>And that is how we can play with MonadReader.&lt;/p></description></item><item><title>Archives</title><link>https://wojtek-rz.github.io/archives/</link><pubDate>Sun, 06 Mar 2022 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/archives/</guid><description/></item><item><title>Links</title><link>https://wojtek-rz.github.io/links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/links/</guid><description>&lt;p>Here are some links to my other profiles and projects. Feel free to check them out!&lt;/p></description></item><item><title>Search</title><link>https://wojtek-rz.github.io/search/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/search/</guid><description/></item></channel></rss>

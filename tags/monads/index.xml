@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Monads on Wojtek Rzeplinski's website</title><link>https://wojtek-rz.github.io/tags/monads/</link><description>Recent content in Monads on Wojtek Rzeplinski's website</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 30 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://wojtek-rz.github.io/tags/monads/index.xml" rel="self" type="application/rss+xml"/><item><title>Global variables in Haskell with MonadReader!</title><link>https://wojtek-rz.github.io/p/global-variables-in-haskell-with-monadreader/</link><pubDate>Sat, 30 Mar 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/global-variables-in-haskell-with-monadreader/</guid><description>&lt;h1 id="what-is-monad-reader-in-haskell">&lt;a href="#what-is-monad-reader-in-haskell" class="header-anchor">&lt;/a>What is Monad Reader in Haskell?
+&lt;/h1>&lt;p>Understanding the &lt;code>MonadReader&lt;/code> class in Haskell can be challenging.
+Online tutorials often focus on implementation details rather than its purpose and usefulness.
+By the end of this post, you&amp;rsquo;ll have a clear understanding of how MonadReader streamlines
+environment passing in Haskell, making your code cleaner and more maintainable.&lt;/p>
+&lt;h3 id="motivation">&lt;a href="#motivation" class="header-anchor">&lt;/a>Motivation
+&lt;/h3>&lt;p>The term &amp;lsquo;monad reader&amp;rsquo; comes from the idea that all functions read from a common source.&lt;/p>
+&lt;p>For example, suppose you have a global configuration variable that several functions read from.
+By using a MonadReader, you can avoid passing that configuration as an argument to each function.
+The result of our monad would be a function takes this global variable as an argument and
+then passes it to each function within it.&lt;/p>
+&lt;p>Here is a simple example. Suppose we are calculating the total cost of a trip to Europe.
+We visit three countries, each with its own currency:
+GBP in the UK, EUR in France and CHF in Switzerland.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">type&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kt">String&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;EUR&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">4.3&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;GBP&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">4.9&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">exchangeRateToPln&lt;/span> &lt;span class="s">&amp;#34;CHF&amp;#34;&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">3.9&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We want to pass a dictionary of currency rates to any function that needs them.
+The functions can have different numbers of arguments,
+but they have one thing in common - &lt;strong>the last argument is of type &lt;code>ExchangeRate&lt;/code>&lt;/strong>.
+(the implementation is not important here).&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getSwitzerlandCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Int&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getSwitzerlandCost&lt;/span> &lt;span class="n">days&lt;/span> &lt;span class="n">nightCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">fromIntegral&lt;/span> &lt;span class="n">days&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">nightCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;CHF&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getUKCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getUKCost&lt;/span> &lt;span class="n">flightCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">2.0&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">flightCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;GBP&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getFranceCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">getFranceCost&lt;/span> &lt;span class="n">distance&lt;/span> &lt;span class="n">fuelCost&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mf">2.0&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">distance&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">fuelCost&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rate&lt;/span> &lt;span class="s">&amp;#34;EUR&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Calculating the total cost is now straightforward:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span> &lt;span class="ow">=&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">let&lt;/span> &lt;span class="n">switzerlandCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getSwitzerlandCost&lt;/span> &lt;span class="mi">7&lt;/span> &lt;span class="mf">100.0&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ukCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">franceCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">getFranceCost&lt;/span> &lt;span class="mf">1000.0&lt;/span> &lt;span class="mf">1.5&lt;/span> &lt;span class="n">exchangeRateToPln&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">in&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">switzerlandCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">ukCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">franceCost&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Maybe we could get rid of the repetitive &lt;code>exchangeRateToPln&lt;/code>? That&amp;rsquo;s what
+Monad Reader does. It hides the last argument of each function call,
+so that it behaves like an abstract global variable that is passed unchanged to every
+to any function in our monad. It is often called the &lt;code>config&lt;/code> or &lt;code>environment&lt;/code> argument.
+The syntax of our monad is as follows:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">switzerlandCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getSwitzerlandCost&lt;/span> &lt;span class="mi">7&lt;/span> &lt;span class="mf">100.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ukCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">franceCost&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getFranceCost&lt;/span> &lt;span class="mf">1000.0&lt;/span> &lt;span class="mf">1.5&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">switzerlandCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">ukCost&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">franceCost&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What if we want to write something like &lt;code>gifts &amp;lt;- 100&lt;/code>? The &lt;code>100&lt;/code> is a value,
+not a function that takes &lt;code>ExchangeRate&lt;/code> as its last argument. We would write
+&lt;code>gifts &amp;lt;- return 100&lt;/code> and that&amp;rsquo;s the monadic way to do it.&lt;/p>
+&lt;p>Believe it or not, but in the last code example we actually used a MonadReader.
+The monadic type here is &lt;code>ExchangeRate -&amp;gt; Double&lt;/code>, but we can abstract away
+the implementation details here and write it with the &lt;code>Reader&lt;/code> constructor
+from &lt;code>Control.Monad.Reader&lt;/code> library:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- is the same as&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- in general:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- Reader Env(last argument of functions / environment) Value(return value of the monad) &lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What if we want to store &lt;code>Environment&lt;/code> value in a &amp;ldquo;variable&amp;rdquo;? That&amp;rsquo;s what identity function does:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">exchangeRate&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nf">\&lt;/span>&lt;span class="n">x&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can also run some function with changed environment. The most popular use case is when writing interpreters,
+but let&amp;rsquo;s say we want to calculate the cost of our trip if the economic crisis were to hit.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">changeToCrisisRates&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">changeToCrisisRates&lt;/span> &lt;span class="n">rates&lt;/span> &lt;span class="n">currency&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="mi">2&lt;/span> &lt;span class="o">*&lt;/span> &lt;span class="n">rates&lt;/span> &lt;span class="n">currency&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCostWhenCrisis&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">ExchangeRate&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Double&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateTotalCostWhenCrisis&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">rates&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">id&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">calculateTotalCost&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">changeToWarRates&lt;/span> &lt;span class="n">rates&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here we have a function that changes the environment &lt;code>changeToCrisisRates :: ExchangeRate -&amp;gt; ExchangeRate&lt;/code>
+and we run the &lt;code>calculateTotalCost&lt;/code> calculation with the modified environment.&lt;/p>
+&lt;p>These two applications are so common,
+that they deserve separate functions within the MonadReader class:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">ask&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Env&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- monad that returns Env&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">local&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Env&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Val&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="kt">Val&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- Given a function to modify Env and current calculation,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- return calculation that would run with modified Env.&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Type &lt;code>Env&lt;/code> denotes the environment type, which in our example
+is &lt;code>ExchangeRate&lt;/code>.&lt;/p>
+&lt;p>Another useful function is &lt;code>asks&lt;/code> which helps with the problem: what if I want to get
+only part of Env, not the whole Env.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">asks&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="kt">Reader&lt;/span> &lt;span class="kt">Env&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- given Env selector, create calculation that &lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- runs selector on Env and returns the value&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="implementation-details">&lt;a href="#implementation-details" class="header-anchor">&lt;/a>Implementation details
+&lt;/h3>&lt;p>Let&amp;rsquo;s try to implement this monad. What is a monadic type here?
+Remember, that left arrow &lt;code>&amp;lt;-&lt;/code> notation is a syntax for &lt;code>&amp;gt;&amp;gt;=&lt;/code> with lambda expressions:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">value&lt;/span> &lt;span class="ow">&amp;lt;-&lt;/span> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">value&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">-- is equal to&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nf">calculateCost&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="kr">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">getUKCost&lt;/span> &lt;span class="mf">200.0&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nf">\&lt;/span>&lt;span class="n">value&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">return&lt;/span> &lt;span class="n">value&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>So &lt;code>getUKCost 200.0&lt;/code> is of type &lt;code>ExchangeRate -&amp;gt; Double&lt;/code> which should be our monadic
+value. More generally, if &lt;code>m&lt;/code> is our monad we would like to have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">m a == Env -&amp;gt; a
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>So here, the monad is a function, that takes environment and returns a value.
+A useful interpetation is that monads are containers for some values.
+How can a function be a container? Actually, if we have a function `_ -&amp;gt; 10&amp;rsquo;
+then no matter what we give it as an argument we will get 10.
+This makes it 100% certain to hold the value 10. How do we chain such monads?
+We would like to implement bind function with type:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;=&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;=&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="kt">Env&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>It takes a monadic value with type &lt;code>m a&lt;/code> and passed the value &lt;code>a&lt;/code> to the function,
+which returns the monadic value &lt;code>m b&lt;/code>. But to get value &lt;code>a&lt;/code> from monad
+&lt;code>Env -&amp;gt; a&lt;/code> we have to pass &lt;code>Env&lt;/code>. And that&amp;rsquo;s exacly how we implement it:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">h&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="n">w&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">h&lt;/span> &lt;span class="n">w&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">w&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We get the value from &lt;code>h&lt;/code> with &lt;code>h w&lt;/code> and pass it to &lt;code>f&lt;/code>. Because the result of bind
+must also have monadic value &lt;code>m b == Env -&amp;gt; b&lt;/code>, and the result of &lt;code>f&lt;/code> is a value
+inside the function container, we have to pass again &lt;code>w&lt;/code> to the result &lt;code>f (h w)&lt;/code> to
+get the value inside the monad.&lt;/p>
+&lt;p>And even pure arithmetic has an interesting interpretation. It is a calculation
+that ignores the result and always returns the value.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="nf">return&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="kr">_&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In many places you will see such implementation:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">instance&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="p">((&lt;/span>&lt;span class="ow">-&amp;gt;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">r&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="kr">_&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">x&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">h&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="nf">\&lt;/span>&lt;span class="n">w&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">h&lt;/span> &lt;span class="n">w&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">w&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>where the most confusing part is this &lt;code>((-&amp;gt;) r)&lt;/code>. This is type constructor which
+is missing the argument - value it will take. With list monad we have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">instance&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="kt">[]&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">xs&lt;/span> &lt;span class="o">&amp;gt;&amp;gt;=&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">concat&lt;/span> &lt;span class="o">$&lt;/span> &lt;span class="n">map&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="n">xs&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">return&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>and &lt;code>[]&lt;/code> is a constructor that is also missing value. For example if we write &lt;code>[] Int&lt;/code>,
+we give the type constructor &lt;code>[]&lt;/code> type &lt;code>Int&lt;/code> and the result is &lt;code>[Int]&lt;/code>. So we can say that
+&lt;code>[]&lt;/code> is of &lt;em>kind&lt;/em> &lt;code>* -&amp;gt; *&lt;/code>, where &lt;code>*&lt;/code> is a type. Even more, &lt;code>(-&amp;gt;) r&lt;/code> is also a type
+constructor of kind &lt;code>* -&amp;gt; *&lt;/code>. If we give it the type &lt;code>String&lt;/code> we get &lt;code>(-&amp;gt;) r String&lt;/code> which
+can be also written as &lt;code>r -&amp;gt; String&lt;/code>. In the Haskell documentation, &lt;code>m = (-&amp;gt;) r&lt;/code>, so &lt;code>m&lt;/code>
+is a monad type constructor. Therefore &lt;code>m a&lt;/code> expands to &lt;code>r -&amp;gt; a&lt;/code>.&lt;/p>
+&lt;p>Useful exercises are writing &lt;code>functor&lt;/code> and &lt;code>applicative&lt;/code> instances for the monad function,
+as well as &lt;code>ask&lt;/code> and &lt;code>local&lt;/code> functions (I explained what they do in the previous section).
+These implementations are:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-haskell" data-lang="haskell">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">class&lt;/span> &lt;span class="kt">Monad&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="ow">=&amp;gt;&lt;/span> &lt;span class="kt">MonadReader&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="o">|&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="kr">where&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ask&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">r&lt;/span> &lt;span class="c1">-- we now now that m r expands to r -&amp;gt; r, so only id fits&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ask&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">id&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="ow">::&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">r&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">r&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="ow">-&amp;gt;&lt;/span> &lt;span class="n">m&lt;/span> &lt;span class="n">a&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">f&lt;/span> &lt;span class="n">previousReader&lt;/span> &lt;span class="n">env&lt;/span> &lt;span class="ow">=&lt;/span> &lt;span class="n">previousReader&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">f&lt;/span> &lt;span class="n">env&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>And that is how we can play with MonadReader.&lt;/p></description></item></channel></rss>

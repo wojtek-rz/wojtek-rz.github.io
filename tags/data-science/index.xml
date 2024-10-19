@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Data Science on Wojtek Rzeplinski's website</title><link>https://wojtek-rz.github.io/tags/data-science/</link><description>Recent content in Data Science on Wojtek Rzeplinski's website</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://wojtek-rz.github.io/tags/data-science/index.xml" rel="self" type="application/rss+xml"/><item><title>NumPy explained - meshgrid function</title><link>https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/</link><pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/</guid><description>&lt;p>When searching the web for explanations of &lt;code>numpy.meshgrid&lt;/code> function, I found that most of them are useless. They contain very abstract description copied from the documentation and provide one simple example that doesn&amp;rsquo;t explain anything why it works the way it does. And in many cases they forgot that more than 2 dimensions exist. And what is this &lt;code>indexing='ij'&lt;/code> parameter? In this post I will try to explain how &lt;code>meshgrid&lt;/code> works and why it is useful.&lt;/p>
+&lt;h2 id="introduction---how-to-keep-array-of-points-in-2d-space">&lt;a href="#introduction---how-to-keep-array-of-points-in-2d-space" class="header-anchor">&lt;/a>Introduction - How to keep array of points in 2D space?
+&lt;/h2>&lt;p>Imagine a problem, that you have to store some function $f(x) = y$ on the Cartesian plane (meaning &amp;ldquo;x-y&amp;rdquo; plane).
+To keep things simple let&amp;rsquo;s assume the function is $f(x) = x^2$.
+A person not familiar with numpy or programming, but familiar with discrete functions from the school, would probably write something like this:&lt;/p>
+&lt;p>&lt;strong>First approach:&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;#34;arr&amp;#34; is an array of values&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">4&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">9&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">4&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">16&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#in general: arr[x] = y&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>But this code has various problems. It only works when the &amp;ldquo;x&amp;rdquo; values are non-negative integers. When you have some function that doesn&amp;rsquo;t have discrete values or they don&amp;rsquo;t appear in equal intervals, you can&amp;rsquo;t store it in this way. The natural way to store such a function is to create a &lt;strong>new array, that represents the the &amp;ldquo;x&amp;rdquo; values&lt;/strong>. This way, to store one function (or one set of points on the graph), you need two arrays: one for &amp;ldquo;x&amp;rdquo; values and one for &amp;ldquo;y&amp;rdquo; values.&lt;/p>
+&lt;p>&lt;strong>Better approach:&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In this case, the &amp;ldquo;x&amp;rdquo; array represents simple indexes, but in general it can be any array of values. As a generalization, we will think of this two arrays as a set of points in 2D space. Some confusion may arise from the fact, that each point has index, so we have like 3 things: index, x value and y value. But the order of the points is actually not as important as it may seem.&lt;/p>
+&lt;p>Let&amp;rsquo;s do the plot of this two functions:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="kn">import&lt;/span> &lt;span class="nn">numpy&lt;/span> &lt;span class="k">as&lt;/span> &lt;span class="nn">np&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kn">import&lt;/span> &lt;span class="nn">matplotlib.pyplot&lt;/span> &lt;span class="k">as&lt;/span> &lt;span class="nn">plt&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">5&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">25&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;ro&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Changing the order of the points...&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">5&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">array&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="mi">9&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">4&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">25&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">16&lt;/span>&lt;span class="p">])&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># does it change the plot?&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;ro&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0.png"
+width="543"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0_hu5327014475683305555.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_0_hu9706165383509683289.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="131"
+data-flex-basis="315px"
+>&lt;/p>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1.png"
+width="543"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1_hu5327014475683305555.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_2_1_hu9706165383509683289.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="131"
+data-flex-basis="315px"
+>&lt;/p>
+&lt;p>After changing the order of the points, the plot looks the same.&lt;/p>
+&lt;p>Note that the continous functions are also stored that way. If you think about this, it&amp;rsquo;s not possible to store infinite number of points in the computer memory. What we have to do is to store some of them and if they are close enough, we won&amp;rsquo;t see the difference. To store a continous function in the computer memory to use it in some way, we have to create two arrays:
+one for &amp;ldquo;x&amp;rdquo; values and one for &amp;ldquo;y&amp;rdquo; values. The &amp;ldquo;x&amp;rdquo; values are usually generated by using &lt;code>np.linspace&lt;/code> or &lt;code>np.arange&lt;/code> function.&lt;/p>
+&lt;p>&lt;strong>In general, when we want to store some N-dimensional set of points in numpy, we have to create N arrays.&lt;/strong>&lt;/p>
+&lt;h2 id="meshgrid---what-is-it">&lt;a href="#meshgrid---what-is-it" class="header-anchor">&lt;/a>Meshgrid - what is it?
+&lt;/h2>&lt;p>The &lt;code>meshgrid&lt;/code> function is a way to create a grid of points in a many dimensional space. Simmilary to the graphs we generated above, we want to create graphs that will represent a grid of points.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;o&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0.png"
+width="534"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0_hu14928872166949992371.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_5_0_hu4030102482710682576.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;p>Each point has coordinates &lt;code>(x_1, x_2, x_3, ..., x_N)&lt;/code>, where &lt;code>x_1&lt;/code> is the coordinate of the first axis, &lt;code>x_2&lt;/code> is the coordinate of the second axis and so on. The grid is created by taking all possible combinations of the points from the input arrays. We can imagine that each input array great a line, and the points are where the lines intersect.&lt;/p>
+&lt;p>The output of the &lt;code>meshgrid&lt;/code> function is a list of arrays, where each array represents one dimension.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5]]
+gy:
+[[0 0 0 0 0 0]
+[1 1 1 1 1 1]
+[2 2 2 2 2 2]
+[3 3 3 3 3 3]
+[4 4 4 4 4 4]
+[5 5 5 5 5 5]]
+&lt;/code>&lt;/pre>
+&lt;p>We have array of values of the first dimension x - gx and array of values of the second dimension y - gy. One point one grid has it&amp;rsquo;s position determined by the coresponding values in each array - see the ilustration below. The point takes it&amp;rsquo;s first dimension value from the gx array and the second dimension value from the gy array.&lt;/p>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot.png"
+width="539"
+height="654"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot_hu8016046939532002911.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/screenshot_hu8756571112508235526.png 1024w"
+loading="lazy"
+alt="Screenshot from 2024-10-12 21-36-43.png"
+class="gallery-image"
+data-flex-grow="82"
+data-flex-basis="197px"
+>&lt;/p>
+&lt;p>In the introduction I said that each point on the graph has also it&amp;rsquo;s index in the arrays, that is not important (as the order is not important). Here, each point has two indices, because we have two dimension.&lt;/p>
+&lt;h2 id="why-not-use-1-dim-arrays">&lt;a href="#why-not-use-1-dim-arrays" class="header-anchor">&lt;/a>Why not use 1-dim arrays?
+&lt;/h2>&lt;p>When I try to flatten the 2D coords arrays to 1D arrays, I have:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">flatten&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">flatten&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">plot&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;o&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">plt&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">show&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5 0 1 2 3 4 5]
+gy:
+[0 0 0 0 0 0 1 1 1 1 1 1 2 2 2 2 2 2 3 3 3 3 3 3 4 4 4 4 4 4 5 5 5 5 5 5]
+&lt;/code>&lt;/pre>
+&lt;p>&lt;img src="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1.png"
+width="534"
+height="413"
+srcset="https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1_hu12645546182342016098.png 480w, https://wojtek-rz.github.io/p/numpy-explained-meshgrid-function/2024-10-12-meshgrid_files/2024-10-12-meshgrid_9_1_hu8650582429665530684.png 1024w"
+loading="lazy"
+alt="png"
+class="gallery-image"
+data-flex-grow="129"
+data-flex-basis="310px"
+>&lt;/p>
+&lt;p>We have exacly the same output. The reason for that is simple. I pointed out that the indices are not important, but the values are. The values are the coordinates of the points. So I changed the indices of the points and everything still works.
+If I would write the meshgrid function by myself, I would probably use 1D arrays, because it&amp;rsquo;s simpler. But the numpy developers decided to use multi-dimensional arrays.&lt;/p>
+&lt;p>One of the answers it is easier to futher use the meshgrid values in our computations, because we can predict what the values are. When we take meshgrid arrays:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># x, y are 1D arrays&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>the following property holds (you can check it by yourself on the examples above):&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In the &lt;code>gx&lt;/code> array, the value is determined entirely by the second index, and in the &lt;code>gy&lt;/code> array, the value is determined entirely by the first index.&lt;/p>
+&lt;p>This is very useful, because we can easily see what the values are and how they are ordered, but also what are the dimensions of the arrays.&lt;/p>
+&lt;h2 id="the-indexing-parameter">&lt;a href="#the-indexing-parameter" class="header-anchor">&lt;/a>The &amp;lsquo;indexing&amp;rsquo; parameter
+&lt;/h2>&lt;p>When I read the description of this parameter the first thing I tried was transposing the output arrays. But that gave exacly the same graph as before, so I though to myself: &amp;ldquo;What is the point of this parameter?&amp;rdquo;.&lt;/p>
+&lt;p>The &lt;code>indexing&lt;/code> parameter is used to which array should be the first one in the indices of each points.&lt;/p>
+&lt;p>If you looked confused about the previous paragraph, when the first coordinate &lt;code>i&lt;/code> in &lt;code>gx[i,j]&lt;/code> what the one that corresponded with the second array &lt;code>y&lt;/code> then here&amp;rsquo;s the answer. If you have &lt;code>xy&lt;/code> cartesian plane, then the &lt;code>x&lt;/code> coordinate actualy points to imaginary &amp;ldquo;column&amp;rdquo; of numbers in space, and the &lt;code>y&lt;/code> parameter points to the &amp;ldquo;row&amp;rdquo; of numbers. Because the &lt;code>meshgrid&lt;/code> function output should be interpreted as a matrix, when input is on the cartesian plane, the first two dimensions are swapped.&lt;/p>
+&lt;p>There are two possible values of the &lt;code>indexing&lt;/code> parameter: &lt;code>'xy'&lt;/code> and &lt;code>'ij'&lt;/code>. The default value is &lt;code>'xy'&lt;/code> and was explained above. When you set it to &lt;code>'ij'&lt;/code>, you use matrix indexing in the input arrays, so the first array is the first dimension in the grid arrays and the second array is the second dimension. In &lt;code>ij&lt;/code> mode, the following property holds:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In 90% of the cases you won&amp;rsquo;t need to know the difference. But there is simple example, when it matters. When you are iterating over the grid arrays, you have to know which dimensions are on which position.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">10&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">for&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="n">j&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">y&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="c1"># do something with gx[i,j]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>---------------------------------------------------------------------------
+IndexError Traceback (most recent call last)
+Cell In[35], line 6
+4 for i in range(len(x)):
+5 for j in range(len(y)):
+----&amp;gt; 6 gx[i,j] = 0 # do something with gx[i,j]
+7 gy[i,j] = 0
+IndexError: index 6 is out of bounds for axis 0 with size 6
+&lt;/code>&lt;/pre>
+&lt;p>The correct code would be:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">10&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">y&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">y&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">for&lt;/span> &lt;span class="n">i&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">y&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">for&lt;/span> &lt;span class="n">j&lt;/span> &lt;span class="ow">in&lt;/span> &lt;span class="nb">range&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">len&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">)):&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gx&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="c1"># do something with gx[i,j]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">gy&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="n">i&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="n">j&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">0&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="the-sparse-parameter">&lt;a href="#the-sparse-parameter" class="header-anchor">&lt;/a>The &amp;lsquo;sparse&amp;rsquo; parameter
+&lt;/h2>&lt;p>The &amp;lsquo;sparse&amp;rsquo; parameter is used to return the output arrays as sparse matrices.&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">gx&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">meshgrid&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">np&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">arange&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">6&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">sparse&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="kc">True&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gx:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gx&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;gy:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">gy&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>gx:
+[[0 1 2 3 4 5]]
+gy:
+[[0]
+[1]
+[2]
+[3]
+[4]
+[5]]
+&lt;/code>&lt;/pre>
+&lt;p>This strange form of the output uses the broadcast mechanism to save memory.&lt;/p>
+&lt;p>The broadcast is a mechanism that allows numpy to perform operations on arrays of different shapes. The dimensions are compatible, when they are equal or one of them is 1. For example, arrays of shape (3, 1, 3) and (1, 4, 1) are compatible and the resulting array will have shape (3, 4, 3). You can think of this as repeating the smaller array along the missing dimensions, so that it matches the shape of the larger array. In our example (3,1,3) is broadcasted to (3,4,3) by repeating the second dimension 4 times, so accesing (i, j, k) is the same as accesing (i, 0, k).&lt;/p>
+&lt;p>The sparse output is a way to save memory, because if we have a function like this: $f(x,y) = x^2 + y^2$&lt;/p>
+&lt;p>we can use broadcast mechanism on the output of the meshgrid function.
+Output dimensions in the example are &lt;code>gx.shape=(6, 1)&lt;/code> and gy.shape=(1, 6). The resulting array will have shape (6, 6) and the value at position (i, j) will be &lt;code>gx[i, 0]**2 + gy[0, j]**2&lt;/code>. So to calculate the function values we would do:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-python" data-lang="python">&lt;span class="line">&lt;span class="cl">&lt;span class="n">f_values&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">gx&lt;/span> &lt;span class="o">**&lt;/span> &lt;span class="mi">2&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="n">gy&lt;/span> &lt;span class="o">**&lt;/span> &lt;span class="mi">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;f_values:&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">print&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">f_values&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre>&lt;code>f_values:
+[[ 0 1 4 9 16 25]
+[ 1 2 5 10 17 26]
+[ 4 5 8 13 20 29]
+[ 9 10 13 18 25 34]
+[16 17 20 25 32 41]
+[25 26 29 34 41 50]]
+&lt;/code>&lt;/pre>
+&lt;h2 id="conclusion">&lt;a href="#conclusion" class="header-anchor">&lt;/a>Conclusion
+&lt;/h2>&lt;p>It is much easier to understand something when you know why it was created that way. I hope that this post helped you to understand the &lt;code>meshgrid&lt;/code> function and why it is useful. If you have any questions or suggestions, please let me know in the comments.&lt;/p></description></item></channel></rss>

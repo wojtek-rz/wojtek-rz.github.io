@@ -1,0 +1,209 @@
+<!doctype html><html lang=en-gb dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="My journey on running Haskell programs on the web"><title>From Code to Execution: Running Haskell Programs on the Web</title>
+<link rel=canonical href=https://wojtek-rz.github.io/p/from-code-to-execution-running-haskell-programs-on-the-web/><link rel=stylesheet href=/scss/style.min.2eb51b5cb500d6ffa39a5cc4303f6a57d40117e2a520061289a834c815b9b01f.css><meta property='og:title' content="From Code to Execution: Running Haskell Programs on the Web"><meta property='og:description' content="My journey on running Haskell programs on the web"><meta property='og:url' content='https://wojtek-rz.github.io/p/from-code-to-execution-running-haskell-programs-on-the-web/'><meta property='og:site_name' content="Wojtek Rzeplinski's website"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='Haskell'><meta property='article:tag' content='Webassembly'><meta property='article:tag' content='Interpreters'><meta property='article:tag' content='Runtimes'><meta property='article:tag' content='Javascript'><meta property='article:published_time' content='2024-08-12T00:00:00+00:00'><meta property='article:modified_time' content='2024-08-12T00:00:00+00:00'><meta name=twitter:title content="From Code to Execution: Running Haskell Programs on the Web"><meta name=twitter:description content="My journey on running Haskell programs on the web"><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu8172189377105849349.jpg width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>Wojtek Rzeplinski's website</a></h1><h2 class=site-description>Machine learning student at the University of Warsaw.</h2></div></header><ol class=menu-social><li><a href=https://github.com/wojtek-rz target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://www.linkedin.com/in/wojtekrzeplinski/ target=_blank title=Linkedin rel=me><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/links/><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>Links</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">Table of contents</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#thing-about-webassembly>Thing about WebAssembly</a></li><li><a href=#compiling-haskell-to-webassembly>Compiling Haskell to WebAssembly</a></li><li><a href=#running-webassembly-binary-in-the-browser>Running WebAssembly binary in the browser</a></li><li><a href=#creating-terminal-frontend>Creating terminal frontend</a><ol><li><a href=#problems>Problems</a></li></ol></li><li><a href=#hosting>Hosting</a></li></ol></nav></div></section></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/experiments/>Experiments</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/from-code-to-execution-running-haskell-programs-on-the-web/>From Code to Execution: Running Haskell Programs on the Web</a></h2><h3 class=article-subtitle>My journey on running Haskell programs on the web</h3></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Aug 12, 2024</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>7 minute read</time></div></footer></div></header><section class=article-content><p>Have you ever had the feeling that you have written a cool script or program and you want to show it to the world? If so, then what would be the best way
+to show it to everyone? I always think about two aspects of a good demo.
+The first one is whether potential user can experience and play with your software.
+The second one how much effort the potential user has to put in to load and configure
+your software.</p><p>One of the best ways to present your software is to embbed it inside web application.
+That way, there is no downloading the codebase (explicitely) and no configuration for the user.
+Someone can just enter the website and start toying with your programs - great example is
+<a class=link href=https://huggingface.co/ target=_blank rel=noopener>huggingface</a> where we can play with the models from the frontend UI.</p><p>Here I focus on programs with command line interface to communicate with the world.
+Some time ago I created an interpreter of the programming language of my invention - <a class=link href=https://github.com/wojtek-rz/mim-projekty/tree/main/Programming%20languages%20and%20paradigms/Emilia%20Programming%20Language target=_blank rel=noopener>Emilia
+Programming Language</a>. It is written
+in Haskell and uses CLI to communicate with the world. The online demo can be found <a class=link href=https://wojteks-misc-files.pages.dev/ target=_blank rel=noopener>here</a> - note that it needs a couple of seconds to load (it&rsquo;s one of the downsides of Webassembly&mldr;).</p><p>I want to embed my Haskell interpreter on a website. I could do this by creating backend service on a &ldquo;compute instance&rdquo; in the cloud that would run the Emilia executable, but I would like to avoid that cost, to keep the demo as cheap as possible for me.</p><h2 id=thing-about-webassembly><a href=#thing-about-webassembly class=header-anchor></a>Thing about WebAssembly</h2><p>Actually there is a way to do all the computation on the client side. And I don&rsquo;t have to rewrite all interpreter to Javascript to do that. The answer is <strong>WebAssembly</strong>.</p><p>It is a low -evel programming code with assebmler-like instruction set designed for near-native performance. Web browsers implement WebAssembly interpreters and compilers, allowing for much faster execution than Javascript.
+Many programming language compilers and their extensions allow compilation to
+WebAssembly in addition to compilation to machine code. (Clang, Go, Haskell).</p><p>Note that this is only the concise tutorial of the steps I had to take in my project.
+If you&rsquo;re not fammilliar with WebAssembly you won&rsquo;t find detailed explanation of all the concepts here.</p><h2 id=compiling-haskell-to-webassembly><a href=#compiling-haskell-to-webassembly class=header-anchor></a>Compiling Haskell to WebAssembly</h2><p>The first thing I had to do was to compile haskell into wasm (WebAssembly), which
+is probably a thing only a handful of developers have done. Fortunately the creators
+of Haskell compiler (GHC) have created a GHC backend that compiles to wasm. The official
+tutorial is available <a class=link href=https://ghc.gitlab.haskell.org/ghc/doc/users_guide/wasm.html target=_blank rel=noopener>here</a> and you can download the project <a class=link href=https://gitlab.haskell.org/ghc/ghc-wasm-meta target=_blank rel=noopener>here</a>.</p><p>After running the instalation script all the tools should be available inside
+<code>~/.ghc-wasm</code>. You should run <code>source ~/.ghc-wasm/env</code> to add the tools and
+environment variables to <code>PATH</code>. Then instead of <code>ghc</code>, <code>ghc-pkg</code>, <code>hsc2hs</code> you should use their alternative versions <code>wasm32-wasi-ghc</code>, <code>wasm32-wasi-ghc-pkg</code>
+and <code>wasm32-wasi-hsc2hs</code>. There is also wrapper for cabal that uses wasm backend for compiling and linking the code: <code>wasm32-wasi-cabal</code>.</p><p>My project was written with <code>cabal</code> building tool, so instead of <code>cabal build emilia-lang-exe</code> I write:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wasm32-wasi-cabal build emilia-lang-exe
+</span></span></code></pre></td></tr></table></div></div><p>Make sure that your project uses one thread for execution (rts -N option),
+otherwise the project won&rsquo;t compile.
+{:.notice&ndash;warning}</p><p>Then you can find the compiled wasm binary inside by running <code>cabal list-bin exe:emilia-lang-exe</code>, and copy it to our current workplace.</p><p>As a result we obtained <code>emilia-lang-exe.wasm</code> binary file written in WebAssembly.
+You can run it with wasm runtime, a separate program, like <code>wasmtime</code> that
+came with the <code>wasm-ghc</code> and should be in your path.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>wasmtime run emilia-lang-exe.wasm --help
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>Usage: emilia-lang-exe &lt;file&gt;
+</span></span><span class=line><span class=cl>       emilia-lang-exe --repl
+</span></span><span class=line><span class=cl>       emilia-lang-exe
+</span></span><span class=line><span class=cl>If no file is provided, executable will read from stdin.
+</span></span></code></pre></td></tr></table></div></div><p>You can also run this file in the browser and this is what we are going to do.</p><h2 id=running-webassembly-binary-in-the-browser><a href=#running-webassembly-binary-in-the-browser class=header-anchor></a>Running WebAssembly binary in the browser</h2><p>Moderm browsers come with the wasm interpreter out of the box. But our CLI binary requires one more thing to run, that is IO interface, a way to communicate with the external world. This was build in the <code>wasmtime</code> interpreter that we already used. Along with some other useful things like: file operations, time and random utilities they create a set of functions called a <strong>runtime</strong>.</p><p>We need a bridge that would connect external world to our program. The most established one is called <a class=link href=https://docs.wasmer.io/sdk/wasmer-js target=_blank rel=noopener>Wasmer</a>.</p><p>The easiest way is to create a node project with bundler, for example with Vite.
+After creating you have to install <code>wasmer-sdk</code>:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>npm install -S @wasmer/sdk
+</span></span></code></pre></td></tr></table></div></div><p>Then you can import it inside main javascript (typescript) file, for example <code>index.ts</code> and use it. On the official website there is simple example of how to
+use Python binary:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kr>import</span> <span class=p>{</span> <span class=nx>init</span><span class=p>,</span> <span class=nx>Wasmer</span> <span class=p>}</span> <span class=nx>from</span> <span class=s2>&#34;@wasmer/sdk&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl><span class=kr>await</span> <span class=nx>init</span><span class=p>();</span>
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=nx>pkg</span> <span class=o>=</span> <span class=kr>await</span> <span class=nx>Wasmer</span><span class=p>.</span><span class=nx>fromRegistry</span><span class=p>(</span><span class=s2>&#34;python/python@3.12&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=nx>instance</span> <span class=o>=</span> <span class=kr>await</span> <span class=nx>pkg</span><span class=p>.</span><span class=nx>entrypoint</span><span class=p>.</span><span class=nx>run</span><span class=p>({</span>
+</span></span><span class=line><span class=cl>    <span class=nx>args</span><span class=o>:</span> <span class=p>[</span><span class=s2>&#34;-c&#34;</span><span class=p>,</span> <span class=s2>&#34;print(&#39;Hello, World!&#39;)&#34;</span><span class=p>],</span>
+</span></span><span class=line><span class=cl><span class=p>});</span>
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=p>{</span> <span class=nx>code</span><span class=p>,</span> <span class=nx>stdout</span> <span class=p>}</span> <span class=o>=</span> <span class=kr>await</span> <span class=nx>instance</span><span class=p>.</span><span class=nx>wait</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=nx>console</span><span class=p>.</span><span class=nx>log</span><span class=p>(</span><span class=sb>`Python exited with </span><span class=si>${</span><span class=nx>code</span><span class=si>}</span><span class=sb>: </span><span class=si>${</span><span class=nx>stdout</span><span class=si>}</span><span class=sb>`</span><span class=p>);</span>
+</span></span></code></pre></td></tr></table></div></div><p>In our use case we would like to emulate terminal in the browser. The program that would be executed inside it is <code>emilia-lang-exe</code> binary.</p><h2 id=creating-terminal-frontend><a href=#creating-terminal-frontend class=header-anchor></a>Creating terminal frontend</h2><p>There is altready javascript library that generates component with nice looking UI and handy functions and is
+calld <a class=link href=https://xtermjs.org/ target=_blank rel=noopener>xterm</a>. To install the npm module:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>npm install @xterm/xterm
+</span></span></code></pre></td></tr></table></div></div><p>Add to <code>index.html</code> file the following content:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>&lt;!doctype html&gt;
+</span></span><span class=line><span class=cl>&lt;html lang=&#34;en&#34;&gt;
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl>&lt;head&gt;
+</span></span><span class=line><span class=cl>    &lt;meta charset=&#34;UTF-8&#34;&gt;
+</span></span><span class=line><span class=cl>    &lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1.0&#34;&gt;
+</span></span><span class=line><span class=cl>    &lt;title&gt;Wasmer Shell&lt;/title&gt;
+</span></span><span class=line><span class=cl>    &lt;script type=&#34;module&#34; defer src=&#34;index.ts&#34;&gt;&lt;/script&gt;
+</span></span><span class=line><span class=cl>&lt;/head&gt;
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl>&lt;body&gt;
+</span></span><span class=line><span class=cl>    &lt;div id=&#34;terminal&#34;&gt;&lt;/div&gt;
+</span></span><span class=line><span class=cl>&lt;/body&gt;
+</span></span><span class=line><span class=cl> 
+</span></span><span class=line><span class=cl>&lt;/html&gt;
+</span></span></code></pre></td></tr></table></div></div><p>It will load the <code>index.ts</code> file with our script.</p><p>Inside of it we would like to download the binary from url:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>import</span> <span class=nx>type</span> <span class=p>{</span> <span class=nx>Instance</span> <span class=p>}</span> <span class=nx>from</span> <span class=s2>&#34;@wasmer/sdk&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// This will save in url variable path to static file with the wasm binary
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kr>import</span> <span class=nx>url</span> <span class=nx>from</span> <span class=s2>&#34;./emilia-lang-exe.wasm?url&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=p>{</span> <span class=nx>init</span><span class=p>,</span> <span class=nx>initializeLogger</span><span class=p>,</span> <span class=nx>runWasix</span> <span class=p>}</span> <span class=o>=</span> <span class=kr>await</span> <span class=kr>import</span><span class=p>(</span><span class=s2>&#34;@wasmer/sdk&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=kr>await</span> <span class=nx>init</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=nx>module</span> <span class=o>=</span> <span class=kr>await</span> <span class=nx>WebAssembly</span><span class=p>.</span><span class=nx>compileStreaming</span><span class=p>(</span><span class=nx>fetch</span><span class=p>(</span><span class=nx>url</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=nx>instance</span> <span class=o>=</span> <span class=kr>await</span> <span class=nx>runWasix</span><span class=p>(</span><span class=nx>module</span><span class=p>,</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>program</span><span class=o>:</span> <span class=s2>&#34;emilia-lang-exe&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=nx>args</span><span class=o>:</span> <span class=p>[</span><span class=s2>&#34;--repl&#34;</span><span class=p>],</span>
+</span></span><span class=line><span class=cl><span class=p>});</span>
+</span></span></code></pre></td></tr></table></div></div><p>To connect instances input and output to terminal&rsquo;s intput and output we need helper function:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kd>function</span> <span class=nx>connectStreams</span><span class=p>(</span><span class=nx>instance</span><span class=o>:</span> <span class=nx>Instance</span><span class=p>,</span> <span class=nx>term</span><span class=o>:</span> <span class=nx>Terminal</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kr>const</span> <span class=nx>stdin</span> <span class=o>=</span> <span class=nx>instance</span><span class=p>.</span><span class=nx>stdin</span><span class=o>?</span><span class=p>.</span><span class=nx>getWriter</span><span class=p>();</span>
+</span></span><span class=line><span class=cl>    <span class=nx>term</span><span class=p>.</span><span class=nx>onData</span><span class=p>(</span><span class=nx>bufforDoubleEnter</span><span class=p>(</span><span class=nx>data</span> <span class=p>=&gt;</span> <span class=nx>stdin</span><span class=o>?</span><span class=p>.</span><span class=nx>write</span><span class=p>(</span><span class=nx>encoder</span><span class=p>.</span><span class=nx>encode</span><span class=p>(</span><span class=nx>data</span><span class=p>)),</span> <span class=nx>term</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=nx>instance</span><span class=p>.</span><span class=nx>stdout</span><span class=p>.</span><span class=nx>pipeTo</span><span class=p>(</span><span class=k>new</span> <span class=nx>WritableStream</span><span class=p>({</span> <span class=nx>write</span><span class=o>:</span> <span class=nx>chunk</span> <span class=p>=&gt;</span> <span class=nx>term</span><span class=p>.</span><span class=nx>write</span><span class=p>(</span><span class=nx>chunk</span><span class=p>)</span> <span class=p>}));</span>
+</span></span><span class=line><span class=cl>    <span class=nx>instance</span><span class=p>.</span><span class=nx>stderr</span><span class=p>.</span><span class=nx>pipeTo</span><span class=p>(</span><span class=k>new</span> <span class=nx>WritableStream</span><span class=p>({</span> <span class=nx>write</span><span class=o>:</span> <span class=nx>chunk</span> <span class=p>=&gt;</span> <span class=nx>term</span><span class=p>.</span><span class=nx>write</span><span class=p>(</span><span class=nx>chunk</span><span class=p>)</span> <span class=p>}));</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Initialization of the terminal addon:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=kr>import</span> <span class=s2>&#34;xterm/css/xterm.css&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=kr>import</span> <span class=p>{</span> <span class=nx>Terminal</span> <span class=p>}</span> <span class=nx>from</span> <span class=s1>&#39;@xterm/xterm&#39;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=kr>import</span> <span class=p>{</span> <span class=nx>WebLinksAddon</span> <span class=p>}</span> <span class=nx>from</span> <span class=s1>&#39;@xterm/addon-web-links&#39;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=nx>term</span> <span class=o>=</span> <span class=k>new</span> <span class=nx>Terminal</span><span class=p>({</span> <span class=nx>cursorBlink</span><span class=o>:</span> <span class=kc>true</span><span class=p>,</span> <span class=nx>convertEol</span><span class=o>:</span> <span class=kc>true</span> <span class=p>});</span>
+</span></span><span class=line><span class=cl><span class=nx>term</span><span class=p>.</span><span class=nx>open</span><span class=p>(</span><span class=nb>document</span><span class=p>.</span><span class=nx>getElementById</span><span class=p>(</span><span class=s2>&#34;terminal&#34;</span><span class=p>)</span><span class=o>!</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=nx>term</span><span class=p>.</span><span class=nx>loadAddon</span><span class=p>(</span><span class=k>new</span> <span class=nx>WebLinksAddon</span><span class=p>());</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=nx>term</span><span class=p>.</span><span class=nx>writeln</span><span class=p>(</span><span class=s2>&#34;Starting...&#34;</span><span class=p>);</span>
+</span></span></code></pre></td></tr></table></div></div><p>And to connect the instance to the terminal we our helper function:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl><span class=nx>connectStreams</span><span class=p>(</span><span class=nx>instance</span><span class=p>,</span> <span class=nx>term</span><span class=p>);</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=problems><a href=#problems class=header-anchor></a>Problems</h3><p>After we put everything together we see some major problems. After presssing &ldquo;Enter&rdquo; the console is not creating the new line, nor it is sending the line to the
+interpreter. &ldquo;Backspace&rdquo; also doesn&rsquo;t work.</p><p>After some digging it appears that there exists something called <a class=link href=https://en.wikipedia.org/wiki/Line_discipline target=_blank rel=noopener>line discipline</a> and it&rsquo;s main tasks include:</p><blockquote><p>For example, the standard line discipline processes the data it receives from the hardware driver and from applications writing to the device according to the requirements of a terminal on a Unix-like system. On input, it handles special characters such as the interrupt character (typically Control-C) and the erase and kill characters (typically backspace or delete, and Control-U, respectively) and, on output, it replaces all the LF characters with a CR/LF sequence.</p></blockquote><p>Our problem can be solved by <a class=link href="https://github.com/mame/xterm-pty?tab=readme-ov-file" target=_blank rel=noopener>xterm-pty</a> module.</p><p>A PTY, or pseudoterminal, is an intermediate layer between a process and a terminal. It is not just a pipe, but provides several useful functionalities such as input echo, line editing, conversion, etc. PTY is essential for running real-world CUI programs.</p><p>Usually, xterm.js is used with node-pty. Because node-pty is a binding for the PTY functions provided by the operating system, it does not work on a browser. On the other hand, xterm-pty works on a browser because it has an own implementation of simple Linux-like line discipline.</p><p>To add it to our project we have to install the node module:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>npm i xterm-pty
+</span></span></code></pre></td></tr></table></div></div><p>Then we add the following lines:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-js data-lang=js><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>import</span> <span class=p>{</span> <span class=nx>openpty</span> <span class=p>}</span> <span class=nx>from</span> <span class=s2>&#34;xterm-pty&#34;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kr>const</span> <span class=p>{</span> <span class=nx>master</span><span class=p>,</span> <span class=nx>slave</span> <span class=p>}</span> <span class=o>=</span> <span class=nx>openpty</span><span class=p>();</span>
+</span></span><span class=line><span class=cl><span class=nx>term</span><span class=p>.</span><span class=nx>loadAddon</span><span class=p>(</span><span class=nx>master</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=nx>slave</span><span class=p>.</span><span class=nx>write</span><span class=p>(</span><span class=s2>&#34;Starting...\n&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1>// instance initalization...
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl><span class=nx>connectStreams</span><span class=p>(</span><span class=nx>instance</span><span class=p>,</span> <span class=nx>slave</span><span class=p>);</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=hosting><a href=#hosting class=header-anchor></a>Hosting</h2><p>After running</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>npm run build
+</span></span></code></pre></td></tr></table></div></div><p>to build the static website, the result can be available <a class=link href=https://wojteks-misc-files.pages.dev/ target=_blank rel=noopener>here</a>.</p><p>The wasmer sdk library doesn&rsquo;t work out of the box. It uses javascript&rsquo;s <code>sharedArrayBuffer</code> to communicate between threads and most browsers block this functionality, unless the headers
+<code>Cross-Origin-Opener-Policy: same-origin</code> and <code>Cross-Origin-Embedder-Policy: require-corp</code> are present.
+{:.notice&ndash;warning}</p><p>All in all, it was a complicated trip, but every problem was solved in the end.
+I certainly learned a lot along the way.</p><p>Thanks for reading,
+Wojtek</p></section><footer class=article-footer><section class=article-tags><a href=/tags/haskell/>Haskell</a>
+<a href=/tags/webassembly/>Webassembly</a>
+<a href=/tags/interpreters/>Interpreters</a>
+<a href=/tags/runtimes/>Runtimes</a>
+<a href=/tags/javascript/>Javascript</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><footer class=site-footer><section class=copyright>&copy;
+2024 Wojtek Rzeplinski's website</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.27.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>

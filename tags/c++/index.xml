@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>C++ on Wojtek Rzeplinski's website</title><link>https://wojtek-rz.github.io/tags/c++/</link><description>Recent content in C++ on Wojtek Rzeplinski's website</description><generator>Hugo -- gohugo.io</generator><language>en-gb</language><lastBuildDate>Fri, 13 Sep 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://wojtek-rz.github.io/tags/c++/index.xml" rel="self" type="application/rss+xml"/><item><title>One Word on Copy Constructors</title><link>https://wojtek-rz.github.io/p/one-word-on-copy-constructors/</link><pubDate>Fri, 13 Sep 2024 00:00:00 +0000</pubDate><guid>https://wojtek-rz.github.io/p/one-word-on-copy-constructors/</guid><description>&lt;p>Let&amp;rsquo;s say we have this C++ class with all five constructors:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">class&lt;/span> &lt;span class="nc">Foo&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">private&lt;/span>&lt;span class="o">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">int&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span>&lt;span class="o">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Default constructor
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">:&lt;/span> &lt;span class="n">x&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">}&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;An object was created.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">const&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Copy constructor called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Move constructor called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span> &lt;span class="k">operator&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">const&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Copy assignment operator called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">return&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&lt;/span> &lt;span class="k">operator&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;amp;&amp;amp;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Move assignment operator called.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">return&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="k">this&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Destructor
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="o">~&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;An object was destroyed.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Now, let&amp;rsquo;s examine this piece of code:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">Foo&lt;/span> &lt;span class="nf">createNewFooObject&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">auto&lt;/span> &lt;span class="n">foo&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">createNewFooObject&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>What output will the program produce? How often will the copy constructor be invoked?&lt;/p>
+&lt;p>Unfortunately, C++17 doesn&amp;rsquo;t specify it clearly. Possible outputs include:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">An object was created.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Copy constructor called.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">An object was destroyed.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>When I ran this code, the output was the first option. None of the copy constructors were called. So what rule governs this behavior?&lt;/p>
+&lt;h1 id="copy-elision">&lt;a href="#copy-elision" class="header-anchor">&lt;/a>Copy Elision
+&lt;/h1>&lt;p>The C++ compiler uses a technique called &lt;strong>copy elision&lt;/strong>.
+It ensures that if some calls to copy constructors can be avoided, they are.
+But first, let&amp;rsquo;s understand when a copy constructor is invoked.&lt;/p>
+&lt;h2 id="when-the-copy-constructor-is-called">&lt;a href="#when-the-copy-constructor-is-called" class="header-anchor">&lt;/a>When the Copy Constructor is Called
+&lt;/h2>&lt;blockquote>
+&lt;p>The copy constructor is called whenever an object is initialized (by &lt;strong>direct-initialization&lt;/strong> or &lt;strong>copy-initialization&lt;/strong>) from another object of the same type (unless overload resolution selects a better match or the call is elided), which includes.
+&amp;ndash; &lt;cite>&lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_constructor" target="_blank" rel="noopener"
+>cppreference&lt;/a>&lt;/cite>&lt;/p>
+&lt;/blockquote>
+&lt;p>While direct initialization is straightforward, initializing an object from an explicit set of constructor arguments (e.g., &lt;code>T object(arg1, arg2, ...);&lt;/code>), copy-initialization is more nuanced. According to &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_initialization" target="_blank" rel="noopener"
+>cppreference&lt;/a>, there are several scenarios:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>T object = other;&lt;/code> - A named variable is declared with an equal sign.&lt;/li>
+&lt;li>&lt;code>f(other)&lt;/code> - Passing an argument to a function by value.&lt;/li>
+&lt;li>&lt;code>return other;&lt;/code> - Returning from a function that returns by value.&lt;/li>
+&lt;li>&lt;code>throw object; catch (T object)&lt;/code> - Throwing or catching an exception by value.&lt;/li>
+&lt;/ol>
+&lt;p>In the first code snippet, two copy constructors should be called: the first when returning from a function (3) and the second when declaring a variable with an equal sign (1).&lt;/p>
+&lt;h2 id="are-there-guarantees">&lt;a href="#are-there-guarantees" class="header-anchor">&lt;/a>Are There Guarantees?
+&lt;/h2>&lt;p>Since C++17, there’s something called &lt;strong>guaranteed copy elision&lt;/strong>.
+It states:&lt;/p>
+&lt;blockquote>
+&lt;p>Since C++17, a prvalue is not materialized until needed, and then it is constructed directly into the storage of its final destination.
+&amp;ndash; &lt;cite>&lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_elision" target="_blank" rel="noopener"
+>cppreference&lt;/a>&lt;/cite>&lt;/p>
+&lt;/blockquote>
+&lt;p>It means, that even when the syntax suggests a copy constructor should be called, but the value that is the source of the copy is a prvalue,
+the compiler can optimize it away. The result is just a single constructor call in the final destination.&lt;/p>
+&lt;p>The documentation provides two examples of this guarantee:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>When initializing an object in a return statement with a prvalue:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">return&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This optimization was earlier called URVO - &amp;ldquo;unnamed return value optimization&amp;rdquo; and was a common optimization even before C++17, but is now a part of the standard.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>During object initialization when the initializer expression is a prvalue:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">Foo&lt;/span> &lt;span class="n">x&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">}}};&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here, the fact that the constructors are chained together doesn&amp;rsquo;t matter.
+It&amp;rsquo;s worth noting that &amp;ldquo;move&amp;rdquo; assignments are elided, not &amp;ldquo;copy&amp;rdquo;.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>Beyond that, the standard also specifies situations where the compiler &lt;strong>may&lt;/strong> apply copy elision but isn’t obligated to, such as:&lt;/p>
+&lt;ol>
+&lt;li>&lt;code>return&lt;/code> statements with a named operand.
+This optimization is called NRVO - &amp;ldquo;named return value optimization&amp;rdquo; and example of that was in the first code snippet.
+As we saw, most compilers implement this optimization, but it’s not mandatory.&lt;/li>
+&lt;li>Object initialization from a temporary.&lt;/li>
+&lt;li>&lt;code>throw&lt;/code> expressions with a named operand.&lt;/li>
+&lt;li>Exception handlers.&lt;/li>
+&lt;/ol>
+&lt;p>For more details, check &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/copy_elision" target="_blank" rel="noopener"
+>cppreference&lt;/a>.&lt;/p>
+&lt;p>With the introduction of move semantics in C++11, the compiler can also elide move constructors the same way it does with copy constructors.
+{:.notice&amp;ndash;info}&lt;/p>
+&lt;h2 id="some-strange-example">&lt;a href="#some-strange-example" class="header-anchor">&lt;/a>Some strange example
+&lt;/h2>&lt;p>The compilers can be easily tricked when it comes to copy elision.&lt;/p>
+&lt;p>Take this code for example:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-cpp" data-lang="cpp">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">throwFoo&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="mi">5&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">foo&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">printX&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">throw&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">try&lt;/span>&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">throwFoo&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span> &lt;span class="k">catch&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Foo&lt;/span> &lt;span class="n">foo&lt;/span>&lt;span class="p">){&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">foo&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">printX&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">std&lt;/span>&lt;span class="o">::&lt;/span>&lt;span class="n">cout&lt;/span> &lt;span class="o">&amp;lt;&amp;lt;&lt;/span> &lt;span class="s">&amp;#34;Caught an exception&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The result is:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">created&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">5&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">A&lt;/span> &lt;span class="n">move&lt;/span> &lt;span class="n">constructor&lt;/span> &lt;span class="n">called&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">A&lt;/span> &lt;span class="n">copy&lt;/span> &lt;span class="n">constructor&lt;/span> &lt;span class="n">called&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">1600677166&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">Caught&lt;/span> &lt;span class="n">an&lt;/span> &lt;span class="n">exception&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">An&lt;/span> &lt;span class="n">object&lt;/span> &lt;span class="n">was&lt;/span> &lt;span class="n">destroyed&lt;/span>&lt;span class="o">.&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The code compiled without any warnings or errors.
+The output is unexpected, as the object is destroyed and then copied.
+If there are any rules in the C++ that says I can&amp;rsquo;t do that, they are not easy to find.
+C++ reference only says &lt;a class="link" href="https://en.cppreference.com/w/cpp/language/throw" target="_blank" rel="noopener"
+>about the exception throwing&lt;/a>:&lt;/p>
+&lt;blockquote>
+&lt;p>Let &lt;code>ex&lt;/code> be the conversion result:&lt;/p>
+&lt;ul>
+&lt;li>The exception object is copy-initialized from &lt;code>ex&lt;/code>.&lt;/li>
+&lt;/ul>
+&lt;/blockquote>
+&lt;p>The exepction object wasn&amp;rsquo;t copy-initialized, but moved-initialized and produced an undifined behavior.
+If we changed the catch parameter to &lt;code>const Foo&amp;amp; foo&lt;/code>, the output would be very simmiliar but the reported x value would be &lt;code>0&lt;/code>.
+If we would change &lt;code>throw foo;&lt;/code> to &lt;code>throw Foo{5};&lt;/code>, the move would be elided.&lt;/p>
+&lt;p>Maybe the conclusion is to always use &lt;code>throw&lt;/code> with a temporary object, not a named one.&lt;/p>
+&lt;h1 id="summary">&lt;a href="#summary" class="header-anchor">&lt;/a>Summary
+&lt;/h1>&lt;p>Before C++17, copy elision was an optimization that compilers could apply, but it wasn&amp;rsquo;t guaranteed.
+It could generate different results depending on the compiler and optimization level (like debug/release mode).
+It&amp;rsquo;s worth noting that the code that relies on possible optimizations like &amp;ldquo;named return value optimization&amp;rdquo; is not portable
+and can produce different results on different compilers.&lt;/p></description></item></channel></rss>

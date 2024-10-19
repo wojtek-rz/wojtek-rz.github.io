@@ -1,0 +1,376 @@
+<!doctype html><html lang=en-gb dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="How to generate and read assembly code from C/C++ projects"><title>Dive into your assembly code!</title>
+<link rel=canonical href=https://wojtek-rz.github.io/p/dive-into-your-assembly-code/><link rel=stylesheet href=/scss/style.min.2eb51b5cb500d6ffa39a5cc4303f6a57d40117e2a520061289a834c815b9b01f.css><meta property='og:title' content="Dive into your assembly code!"><meta property='og:description' content="How to generate and read assembly code from C/C++ projects"><meta property='og:url' content='https://wojtek-rz.github.io/p/dive-into-your-assembly-code/'><meta property='og:site_name' content="Wojtek Rzeplinski's website"><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='CMake'><meta property='article:tag' content='C/C++'><meta property='article:tag' content='Assembler'><meta property='article:tag' content='Compilation'><meta property='article:tag' content='Linux'><meta property='article:published_time' content='2024-09-13T00:00:00+00:00'><meta property='article:modified_time' content='2024-09-13T00:00:00+00:00'><meta name=twitter:title content="Dive into your assembly code!"><meta name=twitter:description content="How to generate and read assembly code from C/C++ projects"><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu8172189377105849349.jpg width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>Wojtek Rzeplinski's website</a></h1><h2 class=site-description>Machine learning student at the University of Warsaw.</h2></div></header><ol class=menu-social><li><a href=https://github.com/wojtek-rz target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://www.linkedin.com/in/wojtekrzeplinski/ target=_blank title=Linkedin rel=me><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/links/><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>Links</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">Table of contents</h2><div class=widget--toc><nav id=TableOfContents><ol><li><ol><li><a href=#compiler-explorer>Compiler Explorer</a></li><li><a href=#compiling-with-gcc>Compiling with GCC</a></li><li><a href=#assembly-from-object-file>Assembly from object file</a></li><li><a href=#when-using-cmake>When using CMake</a></li></ol></li></ol></nav></div></section></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/tutorials/>Tutorials</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/dive-into-your-assembly-code/>Dive into your assembly code!</a></h2><h3 class=article-subtitle>How to generate and read assembly code from C/C++ projects</h3></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Sep 13, 2024</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>11 minute read</time></div></footer></div></header><section class=article-content><p>When debugging or trying to
+maximize the performance of a program, it is often
+useful to look at the assembly code generated by the compiler.
+There are many tutorials on how to generate assembly code with <code>gcc</code> command,
+but many times you have to work with a large, existing codebase that is composed
+of many <code>CMake</code> targets and library. In this article I will compare different methods
+to read assembly code from C/C++ projects. Typical use cases are:</p><ul><li>When you are dealing with functions independent from the rest of the codebase,
+or with a few files to analize, best universal tool is &ldquo;Compiler Explorer&rdquo;.</li><li>When you are working with a large project that uses <code>CMake</code>, you can use
+default targets to see the assembly of <code>cpp</code> files created by
+<code>CMake</code>. You can modify the flags used to generate that assembly, details in &ldquo;GCC&rdquo; and &ldquo;CMake&rdquo; sections.</li><li>When you have a compiled object file you can use <code>objdump</code> tool to see the assembly code, see &ldquo;Assembly from object file&rdquo; section.</li></ul><h3 id=compiler-explorer><a href=#compiler-explorer class=header-anchor></a>Compiler Explorer</h3><p>Compiler Explorer is a web-based tool that allows you to see assembly code
+generated by compiler in &ldquo;real time&rdquo; (every change to source code recompiles the assembly). It was created by Matt Godbolt and is
+available at <a class=link href=https://godbolt.org/ target=_blank rel=noopener>godbolt.org</a>. It supports many compilers
+and you can use it to compare the assembly code generated by different compilers. Assembly code is cleaned up and colorized, so it is easier to read. You can also see which lines of the assembly code correspond to which lines of the source code.</p><p>Compiler Explorer can also be run locally. It is open source and available on <a class=link href=https://github.com/compiler-explorer/compiler-explorer target=_blank rel=noopener>GitHub</a>. To install
+it, you need to have Node.js installed. Clone the repository and run <code>make</code> in the root directory. This will install all the necessary dependencies, build the project, find the compilers installed on your system and start the http server. More detailed instructions can be found <a class=link href="https://www.youtube.com/watch?v=I2cKVRzJhS0" target=_blank rel=noopener>here</a>.</p><p>But most of the time you will want see the assembly of an existing project, containing multiple files and libraries. Fortunately, Compiler Explorer supports <code>CMake</code>. When running locally, to load a project you have to:</p><ul><li>From the top menu `Add -> Tree (IDE Mode).</li><li>From the Tree menu <code>Project -> Choose file</code> and select zipped project file.</li><li>Select <code>CMake</code> checkbox.</li><li>Choose build type for cmake, that would contain debug information (e.g. <code>-DCMAKE_BUILD_TYPE=Debug</code>).</li><li>Write name of the target you would like to compile</li><li>Select <code>Add new -> Compiler</code> and wait for it to compile.</li></ul><p>The C++ project I currently work with has 160 files, so Godbolt had a tough challenge,
+but the website successfully handled the challenge of compiling my project.
+It wasn&rsquo;t the smoothiest experience, but that&rsquo;s understendable. The site was very slow,
+and the project took 115 seconds to recompile every change (locally it takes 10 seconds,
+because I can build it with 12 cpu cores). I had to change the timout value, which was 10
+seconds by default (github issue <a class=link href=https://github.com/compiler-explorer/compiler-explorer/issues/601 target=_blank rel=noopener>here</a>).
+To do that you have to create a file from the root directory of the project called
+<code>etc/config/compiler-explorer.local.properties</code> and add the following line:
+<code>compileTimeoutMs=100000</code>.</p><p>It was clear that the main use for the project is to work on server, not locally.
+I could not see the output <code>CMake</code> generated until the compilation was finished and the files I uploaded to the website were not the same as the ones I had on my computer.</p><p>It&rsquo;s important to note, that there exists a script from the compiler-explorer project called <a class=link href=https://github.com/compiler-explorer/asm-parser/tree/main target=_blank rel=noopener><code>asm-parser</code></a>,
+that will clean the assembly code.</p><h3 id=compiling-with-gcc><a href=#compiling-with-gcc class=header-anchor></a>Compiling with GCC</h3><p>Simple answer: use the <a class=link href=https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html#index-S target=_blank rel=noopener><code>-S</code></a> option, which tells the compiler to stop after the assembly phase.
+The result will be assembly code with <code>.s</code> extension.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>g++ -S main.cpp -o main.s
+</span></span></code></pre></td></tr></table></div></div><p>Unless you can read AT&amp;T assembly Syntax you will probably want to use the <code>-masm=intel</code> option to get the Intel syntax.</p><p>There are a few options to make assembly code more readable. The <a class=link href=https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#index-fverbose-asm target=_blank rel=noopener><code>-fverbose-asm</code></a> option will add commentary from the original source code. It also adds the architecture and system information at the top of the file.</p><p>You would like to also remove <a class=link href=https://stackoverflow.com/questions/2529185/what-are-cfi-directives-in-gnu-assembler-gas-used-for target=_blank rel=noopener><code>.cfi</code></a> directives from your assembly,
+as they are used for exception handling and debugging. To disable them
+use <code>-fno-asynchronous-unwind-tables</code>, <code>-fno-exceptions</code> options. Also <code>-fno-rtti</code> and <code>-fno-dwarf2-cfi-asm</code> can be useful, as explained <a class=link href=https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output target=_blank rel=noopener>here</a>.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>g++ -S -fverbose-asm -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm -masm<span class=o>=</span>intel main.cpp -o main.s
+</span></span></code></pre></td></tr></table></div></div><p>For example the following C++ code:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-cpp data-lang=cpp><span class=line><span class=cl><span class=kt>int</span> <span class=nf>test</span> <span class=p>(</span><span class=kt>int</span> <span class=n>n</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=kt>int</span> <span class=n>total</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>for</span> <span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=n>n</span><span class=p>;</span> <span class=n>i</span><span class=o>++</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>total</span> <span class=o>+=</span> <span class=n>i</span> <span class=o>*</span> <span class=n>i</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> <span class=n>total</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Will produce the following assembly code:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>_Z4testi:
+</span></span><span class=line><span class=cl>        endbr64 
+</span></span><span class=line><span class=cl>        push    rbp     <span class=c1>#</span>
+</span></span><span class=line><span class=cl>        mov     rbp, rsp        <span class=c1>#,</span>
+</span></span><span class=line><span class=cl>        mov     DWORD PTR -20<span class=o>[</span>rbp<span class=o>]</span>, edi <span class=c1># n, n</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:29:   int total = 0;</span>
+</span></span><span class=line><span class=cl>        mov     DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>0</span>    <span class=c1># total,</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:31:   for (int i = 0; i &lt; n; i++)</span>
+</span></span><span class=line><span class=cl>        mov     DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>0</span>    <span class=c1># i,</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:31:   for (int i = 0; i &lt; n; i++)</span>
+</span></span><span class=line><span class=cl>        jmp     .L9     <span class=c1>#</span>
+</span></span><span class=line><span class=cl>.L10:
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:32:     total += i * i;</span>
+</span></span><span class=line><span class=cl>        mov     eax, DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>  <span class=c1># tmp85, i</span>
+</span></span><span class=line><span class=cl>        imul    eax, eax        <span class=c1># _1, tmp85</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:32:     total += i * i;</span>
+</span></span><span class=line><span class=cl>        add     DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>, eax  <span class=c1># total, _1</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:31:   for (int i = 0; i &lt; n; i++)</span>
+</span></span><span class=line><span class=cl>        add     DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>1</span>    <span class=c1># i,</span>
+</span></span><span class=line><span class=cl>.L9:
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:31:   for (int i = 0; i &lt; n; i++)</span>
+</span></span><span class=line><span class=cl>        mov     eax, DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>  <span class=c1># tmp86, i</span>
+</span></span><span class=line><span class=cl>        cmp     eax, DWORD PTR -20<span class=o>[</span>rbp<span class=o>]</span> <span class=c1># tmp86, n</span>
+</span></span><span class=line><span class=cl>        jl      .L10    <span class=c1>#,</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:34:   return total;</span>
+</span></span><span class=line><span class=cl>        mov     eax, DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>  <span class=c1># _7, total</span>
+</span></span><span class=line><span class=cl><span class=c1># main.cpp:35: }</span>
+</span></span><span class=line><span class=cl>        pop     rbp     <span class=c1>#</span>
+</span></span><span class=line><span class=cl>        ret     
+</span></span></code></pre></td></tr></table></div></div><p>But assembly code won&rsquo;t always be as readable as this. In most useful cases,
+you will compile your code with optimization enabled, which will make the
+assembly code harder to read, as the compiler can also change the order of
+instructions, remove some of them, or inline some functions.</p><p>You can also try different approach. Instead of creating assembly file with
+cpp lines as commentary, you could create a source code with compiled assembly
+pieces. This can be done with (<a class=link href=https://gcc.gnu.org/onlinedocs/gcc/Assembler-Options.html target=_blank rel=noopener><code>-Wa</code></a>) option.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>-a[sub-option...]    turn on listings
+</span></span><span class=line><span class=cl>                     Sub-options [default hls]:
+</span></span><span class=line><span class=cl>                     c      omit false conditionals
+</span></span><span class=line><span class=cl>                     d      omit debugging directives
+</span></span><span class=line><span class=cl>                     g      include general info
+</span></span><span class=line><span class=cl>                     h      include high-level source
+</span></span><span class=line><span class=cl>                     l      include assembly
+</span></span><span class=line><span class=cl>                     m      include macro expansions
+</span></span><span class=line><span class=cl>                     n      omit forms processing
+</span></span><span class=line><span class=cl>                     s      include symbols
+</span></span><span class=line><span class=cl>                     =FILE  list to FILE (must be last sub-option)
+</span></span></code></pre></td></tr></table></div></div><p>We pass to assembler options <code>adhl</code>, so we add <code>-Wa,-adhl</code>. The output would
+not be valid assembly code, but it will be assembly list mixed with source code.
+You also have to pass <code>g</code> option to GCC, so the assembler can match source code
+with assembly code. I also added options to remove <code>.cfi</code> directives from previous
+example.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>g++ -g -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm -masm<span class=o>=</span>intel -Wa,-dhln  main.cpp &gt; main.lst
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>  26:main.cpp      ****
+</span></span><span class=line><span class=cl>  27:main.cpp      **** int <span class=nb>test</span> <span class=o>(</span>int n<span class=o>)</span>
+</span></span><span class=line><span class=cl>  28:main.cpp      **** <span class=o>{</span>
+</span></span><span class=line><span class=cl> <span class=m>159</span>                            .loc <span class=m>1</span> <span class=m>28</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl> <span class=m>160</span> <span class=m>0000</span> F30F1EFA              endbr64
+</span></span><span class=line><span class=cl> <span class=m>161</span> <span class=m>0004</span> <span class=m>55</span>                    push    rbp
+</span></span><span class=line><span class=cl> <span class=m>162</span>                    .LCFI9:
+</span></span><span class=line><span class=cl> <span class=m>163</span> <span class=m>0005</span> 4889E5                mov     rbp, rsp
+</span></span><span class=line><span class=cl> <span class=m>164</span>                    .LCFI10:
+</span></span><span class=line><span class=cl> <span class=m>165</span> <span class=m>0008</span> 897DEC                mov     DWORD PTR -20<span class=o>[</span>rbp<span class=o>]</span>, edi
+</span></span><span class=line><span class=cl>  29:main.cpp      ****   int <span class=nv>total</span> <span class=o>=</span> 0<span class=p>;</span>
+</span></span><span class=line><span class=cl> <span class=m>166</span>                            .loc <span class=m>1</span> <span class=m>29</span> <span class=m>7</span>
+</span></span><span class=line><span class=cl> <span class=m>167</span> 000b C745F800              mov     DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>0</span>
+</span></span><span class=line><span class=cl> <span class=m>167</span>      <span class=m>000000</span>
+</span></span><span class=line><span class=cl> <span class=m>168</span>                    .LBB4:
+</span></span><span class=line><span class=cl>  30:main.cpp      ****
+</span></span><span class=line><span class=cl>  31:main.cpp      ****   <span class=k>for</span> <span class=o>(</span>int <span class=nv>i</span> <span class=o>=</span> 0<span class=p>;</span> i &lt; n<span class=p>;</span> i++<span class=o>)</span>
+</span></span><span class=line><span class=cl> <span class=m>169</span>                            .loc <span class=m>1</span> <span class=m>31</span> <span class=m>12</span>
+</span></span><span class=line><span class=cl> <span class=m>170</span> <span class=m>0012</span> C745FC00              mov     DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>0</span>
+</span></span><span class=line><span class=cl> <span class=m>170</span>      <span class=m>000000</span>
+</span></span><span class=line><span class=cl> <span class=m>171</span>                            .loc <span class=m>1</span> <span class=m>31</span> <span class=m>3</span>
+</span></span><span class=line><span class=cl> <span class=m>172</span> <span class=m>0019</span> EB0D                  jmp     .L9
+</span></span><span class=line><span class=cl> <span class=m>173</span>                    .L10:
+</span></span><span class=line><span class=cl>  32:main.cpp      ****     <span class=nv>total</span> <span class=o>+=</span> i * i<span class=p>;</span>
+</span></span><span class=line><span class=cl> <span class=m>174</span>                            .loc <span class=m>1</span> <span class=m>32</span> <span class=m>16</span> discriminator <span class=m>3</span>
+</span></span><span class=line><span class=cl> <span class=m>175</span> 001b 8B45FC                mov     eax, DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>
+</span></span><span class=line><span class=cl> <span class=m>176</span> 001e 0FAFC0                imul    eax, eax
+</span></span><span class=line><span class=cl> <span class=m>177</span>                            .loc <span class=m>1</span> <span class=m>32</span> <span class=m>11</span> discriminator <span class=m>3</span>
+</span></span><span class=line><span class=cl> <span class=m>178</span> <span class=m>0021</span> 0145F8                add     DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>, eax
+</span></span><span class=line><span class=cl>  31:main.cpp      ****     <span class=nv>total</span> <span class=o>+=</span> i * i<span class=p>;</span>
+</span></span><span class=line><span class=cl> <span class=m>179</span>                            .loc <span class=m>1</span> <span class=m>31</span> <span class=m>3</span> discriminator <span class=m>3</span>
+</span></span><span class=line><span class=cl> <span class=m>180</span> <span class=m>0024</span> 8345FC01              add     DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>, <span class=m>1</span>
+</span></span><span class=line><span class=cl> <span class=m>181</span>                    .L9:
+</span></span><span class=line><span class=cl>  31:main.cpp      ****     <span class=nv>total</span> <span class=o>+=</span> i * i<span class=p>;</span>
+</span></span><span class=line><span class=cl> <span class=m>182</span>                            .loc <span class=m>1</span> <span class=m>31</span> <span class=m>21</span> discriminator <span class=m>1</span>
+</span></span><span class=line><span class=cl> <span class=m>183</span> <span class=m>0028</span> 8B45FC                mov     eax, DWORD PTR -4<span class=o>[</span>rbp<span class=o>]</span>
+</span></span><span class=line><span class=cl> <span class=m>184</span> 002b 3B45EC                cmp     eax, DWORD PTR -20<span class=o>[</span>rbp<span class=o>]</span>
+</span></span><span class=line><span class=cl> <span class=m>185</span> 002e 7CEB                  jl      .L10
+</span></span><span class=line><span class=cl> <span class=m>186</span>                    .LBE4:
+</span></span><span class=line><span class=cl>  33:main.cpp      ****
+</span></span><span class=line><span class=cl>  34:main.cpp      ****   <span class=k>return</span> total<span class=p>;</span>
+</span></span><span class=line><span class=cl> <span class=m>187</span>                            .loc <span class=m>1</span> <span class=m>34</span> <span class=m>10</span>
+</span></span><span class=line><span class=cl> <span class=m>188</span> <span class=m>0030</span> 8B45F8                mov     eax, DWORD PTR -8<span class=o>[</span>rbp<span class=o>]</span>
+</span></span><span class=line><span class=cl>  35:main.cpp      **** <span class=o>}</span>
+</span></span><span class=line><span class=cl> <span class=m>189</span>                            .loc <span class=m>1</span> <span class=m>35</span> <span class=m>1</span>
+</span></span><span class=line><span class=cl> <span class=m>190</span> <span class=m>0033</span> 5D                    pop     rbp
+</span></span><span class=line><span class=cl> <span class=m>191</span>                    .LCFI11:
+</span></span><span class=line><span class=cl> <span class=m>192</span> <span class=m>0034</span> C3                    ret
+</span></span></code></pre></td></tr></table></div></div><p>However we have those <code>.loc</code> directives, which are used for debugging, so
+in my view the result of this method looks more messy.</p><p>Another alternative, would be to use <code>save-temps</code> option, which will save all
+intermediate files (<code>.s</code> for assembly output, <code>.i</code> for preprocessed input file).
+This can be easily added to compiler options in your build tool. The results
+are localted in the build directory, inside the subdirectory for the CMake target.</p><h3 id=assembly-from-object-file><a href=#assembly-from-object-file class=header-anchor></a>Assembly from object file</h3><p>Sometime you may want to see the assembly code from object file. You can use
+<code>objdump</code> tool for that. For example:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>objdump -d -M intel main.o &gt; deas.out
+</span></span></code></pre></td></tr></table></div></div><p>Where <code>-d,--disassemble</code> option tells <code>objdump</code> to display the assembler code,
+and <code>-M</code> option tells <code>objdump</code> to use Intel syntax.</p><p>Result:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>00000000000012c9 &lt;_Z4testi&gt;:
+</span></span><span class=line><span class=cl>    12c9:	f3 0f 1e fa          	endbr64 
+</span></span><span class=line><span class=cl>    12cd:	<span class=m>55</span>                   	push   rbp
+</span></span><span class=line><span class=cl>    12ce:	<span class=m>48</span> <span class=m>89</span> e5             	mov    rbp,rsp
+</span></span><span class=line><span class=cl>    12d1:	<span class=m>89</span> 7d ec             	mov    DWORD PTR <span class=o>[</span>rbp-0x14<span class=o>]</span>,edi
+</span></span><span class=line><span class=cl>    12d4:	c7 <span class=m>45</span> f8 <span class=m>00</span> <span class=m>00</span> <span class=m>00</span> <span class=m>00</span> 	mov    DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>,0x0
+</span></span><span class=line><span class=cl>    12db:	c7 <span class=m>45</span> <span class=nb>fc</span> <span class=m>00</span> <span class=m>00</span> <span class=m>00</span> <span class=m>00</span> 	mov    DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>,0x0
+</span></span><span class=line><span class=cl>    12e2:	eb 0d                	jmp    12f1 &lt;_Z4testi+0x28&gt;
+</span></span><span class=line><span class=cl>    12e4:	8b <span class=m>45</span> <span class=nb>fc</span>             	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>
+</span></span><span class=line><span class=cl>    12e7:	0f af c0             	imul   eax,eax
+</span></span><span class=line><span class=cl>    12ea:	<span class=m>01</span> <span class=m>45</span> f8             	add    DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>,eax
+</span></span><span class=line><span class=cl>    12ed:	<span class=m>83</span> <span class=m>45</span> <span class=nb>fc</span> <span class=m>01</span>          	add    DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>,0x1
+</span></span><span class=line><span class=cl>    12f1:	8b <span class=m>45</span> <span class=nb>fc</span>             	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>
+</span></span><span class=line><span class=cl>    12f4:	3b <span class=m>45</span> ec             	cmp    eax,DWORD PTR <span class=o>[</span>rbp-0x14<span class=o>]</span>
+</span></span><span class=line><span class=cl>    12f7:	7c eb                	jl     12e4 &lt;_Z4testi+0x1b&gt;
+</span></span><span class=line><span class=cl>    12f9:	8b <span class=m>45</span> f8             	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>
+</span></span><span class=line><span class=cl>    12fc:	5d                   	pop    rbp
+</span></span><span class=line><span class=cl>    12fd:	c3                   	ret    
+</span></span></code></pre></td></tr></table></div></div><p>We can see (here and in previous examples) that the names of the functions are mangled and not easily readable. However, in <code>objdump</code> you can use <code>-C</code> option to demangle the names.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>00000000000012c9 &lt;test<span class=o>(</span>int<span class=o>)</span>&gt;:
+</span></span><span class=line><span class=cl>    12c9:	f3 0f 1e fa          	endbr64 
+</span></span><span class=line><span class=cl>    12cd:	<span class=m>55</span>                   	push   rbp
+</span></span><span class=line><span class=cl>    ...
+</span></span></code></pre></td></tr></table></div></div><p>We can also see the assembly code of only one function with <code>-disassemble=name</code> option.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>objdump --disassemble<span class=o>=</span><span class=s2>&#34;test(int)&#34;</span> -C -M intel main.o &gt; deassembled_test.out
+</span></span></code></pre></td></tr></table></div></div><p>Note that without <code>-C</code> option, the name of the function would have to be mangled.</p><p>We can also have source codes comments in our assembly with <code>-S</code> option, but only when the object was compiled with <code>-g</code> option. Another useful option is <code>--no-show-raw-insn</code> which doesn&rsquo;t show raw bytes of machine code, <code>-r</code> which displays relocation entries and <code>-w</code> option which disables line wrapping of long machine code lines. We can shorten <code>-C -S -r</code> to <code>-CSr</code> option.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>objdump --disassemble<span class=o>=</span><span class=s2>&#34;test(int)&#34;</span> -CSr --no-show-raw-insn -M intel main.o &gt; deassembled_test_dbg.out
+</span></span></code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=m>0000000000001129</span> &lt;test<span class=o>(</span>int<span class=o>)</span>&gt;:
+</span></span><span class=line><span class=cl>int <span class=nb>test</span> <span class=o>(</span>int n<span class=o>)</span>
+</span></span><span class=line><span class=cl><span class=o>{</span>
+</span></span><span class=line><span class=cl>    1129:	endbr64 
+</span></span><span class=line><span class=cl>    112d:	push   rbp
+</span></span><span class=line><span class=cl>    112e:	mov    rbp,rsp
+</span></span><span class=line><span class=cl>    1131:	mov    DWORD PTR <span class=o>[</span>rbp-0x14<span class=o>]</span>,edi
+</span></span><span class=line><span class=cl>  int <span class=nv>total</span> <span class=o>=</span> 0<span class=p>;</span>
+</span></span><span class=line><span class=cl>    1134:	mov    DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>,0x0
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>for</span> <span class=o>(</span>int <span class=nv>i</span> <span class=o>=</span> 0<span class=p>;</span> i &lt; n<span class=p>;</span> i++<span class=o>)</span>
+</span></span><span class=line><span class=cl>    113b:	mov    DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>,0x0
+</span></span><span class=line><span class=cl>    1142:	jmp    <span class=m>1151</span> &lt;test<span class=o>(</span>int<span class=o>)</span>+0x28&gt;
+</span></span><span class=line><span class=cl>    <span class=nv>total</span> <span class=o>+=</span> i * i<span class=p>;</span>
+</span></span><span class=line><span class=cl>    1144:	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>
+</span></span><span class=line><span class=cl>    1147:	imul   eax,eax
+</span></span><span class=line><span class=cl>    114a:	add    DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>,eax
+</span></span><span class=line><span class=cl>  <span class=k>for</span> <span class=o>(</span>int <span class=nv>i</span> <span class=o>=</span> 0<span class=p>;</span> i &lt; n<span class=p>;</span> i++<span class=o>)</span>
+</span></span><span class=line><span class=cl>    114d:	add    DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>,0x1
+</span></span><span class=line><span class=cl>    1151:	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x4<span class=o>]</span>
+</span></span><span class=line><span class=cl>    1154:	cmp    eax,DWORD PTR <span class=o>[</span>rbp-0x14<span class=o>]</span>
+</span></span><span class=line><span class=cl>    1157:	jl     <span class=m>1144</span> &lt;test<span class=o>(</span>int<span class=o>)</span>+0x1b&gt;
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>return</span> total<span class=p>;</span>
+</span></span><span class=line><span class=cl>    1159:	mov    eax,DWORD PTR <span class=o>[</span>rbp-0x8<span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span><span class=line><span class=cl>    115c:	pop    rbp
+</span></span><span class=line><span class=cl>    115d:	ret    
+</span></span></code></pre></td></tr></table></div></div><h3 id=when-using-cmake><a href=#when-using-cmake class=header-anchor></a>When using CMake</h3><p>CMake creates targets for each <code>.cpp</code> file. Targets are named the same as the source file, but with different extension. There are targets for:</p><ul><li>assembly code before passed to assembler, with <code>.s</code> extension,</li><li>preprocessed source code, with <code>.i</code> extension.</li></ul><p>It is important to note, that when using many <code>CMake</code> subdirectories the targets are created in the <a class=link href=https://cmake.org/cmake/help/latest/command/add_subdirectory.html target=_blank rel=noopener><code>binary_dir</code></a> of the target&rsquo;s <code>CMakeLists.txt</code> and not the base build directory.
+So if you would like to generate assembly code for a target <code>src/foo/bar/fun.cpp</code> you would run <code>make src/foo/bar/fun.s</code>
+from the appropriate build directory.</p><p>We can see that the generated assembly code is not very readable, beacause we have the same problems as with the previous examples. Fortunately, we can modify flags for the target with <code>CMAKE_CXX_CREATE_ASSEMBLY_SOURCE</code> variable, which is not documented but works.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-cmake data-lang=cmake><span class=line><span class=cl><span class=nb>set</span><span class=p>(</span><span class=s>CMAKE_CXX_CREATE_ASSEMBLY_SOURCE</span> <span class=s2>&#34;&lt;CMAKE_CXX_COMPILER&gt; $(CXX_DEFINES) $(CXX_INCLUDES) ${CMAKE_CXX_FLAGS} -S -fverbose-asm -fno-asynchronous-unwind-tables -fno-exceptions -masm=intel &lt;SOURCE&gt; -o &lt;ASSEMBLY_SOURCE&gt;&#34;</span><span class=p>)</span><span class=err>
+</span></span></span></code></pre></td></tr></table></div></div><p>The names are still mangled, but we can demangle them with some auxiliary tool.
+Besides that, I have encountered strange bug, that <code>add_compile_options</code> command did not add options to the assembly target (maybe because it was redefined later)
+and as a consequence the assemblies targets were compiled with different flags than the release build we wanted to optimize. Also be careful to run these <code>.s</code> and <code>.i</code> targets
+without defining <code>CMAKE_CXX_CREATE_ASSEMBLY_SOURCE</code> flags explicitly, as in my case they included both the debug build flags and the release build flags.</p><p>Futher reading:</p><ul><li><a class=link href=https://www.systutorials.com/generate-a-mixed-source-and-assembly-listing-using-gcc/ target=_blank rel=noopener>https://www.systutorials.com/generate-a-mixed-source-and-assembly-listing-using-gcc/</a></li><li><a class=link href=https://stackoverflow.com/questions/69028715/include-external-header-file-for-c-on-compiler-explorer target=_blank rel=noopener>https://stackoverflow.com/questions/69028715/include-external-header-file-for-c-on-compiler-explorer</a></li><li><a class=link href=https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output target=_blank rel=noopener>https://stackoverflow.com/questions/38552116/how-to-remove-noise-from-gcc-clang-assembly-output</a></li></ul></section><footer class=article-footer><section class=article-tags><a href=/tags/cmake/>CMake</a>
+<a href=/tags/c/c++/>C/C++</a>
+<a href=/tags/assembler/>Assembler</a>
+<a href=/tags/compilation/>Compilation</a>
+<a href=/tags/linux/>Linux</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/p/numpy-explained-meshgrid-function/><div class=article-details><h2 class=article-title>NumPy explained - meshgrid function</h2></div></a></article><article><a href=/p/one-word-on-copy-constructors/><div class=article-details><h2 class=article-title>One Word on Copy Constructors</h2></div></a></article><article><a href=/p/global-variables-in-haskell-with-monadreader/><div class=article-details><h2 class=article-title>Global variables in Haskell with MonadReader!</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+2024 Wojtek Rzeplinski's website</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.27.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
