@@ -121,7 +121,7 @@ npm install @xterm/xterm
 ```
 Add to `index.html` file the following content:
 
-```
+```html
 <!doctype html>
 <html lang="en">
  
