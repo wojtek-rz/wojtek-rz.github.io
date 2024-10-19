@@ -5,9 +5,14 @@ links:
     description: Main github repo for my projects.
     website: https://github.com/wojtek-rz
     image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+  - title: This website's source code
+    description: The source code for this website.
+    website: https://github.com/wojtek-rz/wojtek-rz.github.io
+    image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
   - title: LinkedIn
     description: My LinkedIn profile.
-    website: https://www.linkedin.com/in/wojciech-rzepka/
+    website: https://www.linkedin.com/in/wojtekrzeplinski/
+    image: linkedin.png
   - title: University of Warsaw
     description: My faculty's website.
     website: https://www.mimuw.edu.pl/pl/
