@@ -9,6 +9,7 @@ tags:
   - NumPy
   - Data Science
 math: true
+image: front.svg
 ---
 
 When searching the web for explanations of `numpy.meshgrid` function, I found that most of them are useless. They contain very abstract description copied from the documentation and provide one simple example that doesn't explain anything why it works the way it does. And in many cases they forgot that more than 2 dimensions exist. And what is this `indexing='ij'` parameter? In this post I will try to explain how `meshgrid` works and why it is useful.  

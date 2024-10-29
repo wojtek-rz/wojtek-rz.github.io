@@ -10,6 +10,7 @@ tags:
   - Interpreters
   - Runtimes
   - Javascript
+image: front.svg
 ---
 
 Have you ever had the feeling that you have written a cool script or program and you want to show it to the world? If so, then what would be the best way 

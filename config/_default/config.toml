@@ -16,4 +16,4 @@ hasCJKLanguage = false
 disqusShortname = "wojtek-rz-blog"
 
 [pagination]
-pagerSize = 5
+pagerSize = 10
