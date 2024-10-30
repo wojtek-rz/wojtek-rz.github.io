@@ -104,7 +104,7 @@ Simmilarly, when reading the expression `*f(a, b)` there are two interpretations
 1. `int val = (*f)(a, b)` - `f` is a pointer to a function that takes two arguments and returns an int
 2. `int val = *(f(a, b))` - `f` is a function that returns a pointer to an int
 
-For people somewhat familiar with C syntax, it's clear that the first interpretation is correct. 
+For people somewhat familiar with C syntax, it's clear that the second interpretation is the correct one. 
 Again, the `()` (left operator) has higher precedence than `*` (right operator). 
 
 In summary, the pointer operator `*` has lower precedence than both `[]` and `()`.
