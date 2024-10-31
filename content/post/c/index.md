@@ -7,6 +7,7 @@ tags:
     - types
 categories:
     - tutorials
+image: front.svg
 ---
 
 Nowadays when people use modern programming languages, the C style type declarations 
@@ -36,9 +37,11 @@ The syntax for declaring each of the derived types is:
 
 ## Idea behind the syntax
 
-The syntax was designed to mimic the way the expressions are evaluated.
-Every of the derived types starts with `int` (or any other basic type).
-That's what the expression would evaluate to if we would fill the gaps.
+**The syntax was designed to mimic the way the expressions are evaluated.**
+
+
+Every of the derived types starts with **the basic type**.
+That's what the expression **would evaluate to** if we would fill the gaps.
 
 Let's look at each of the derived types and see how they are evaluated:
 
@@ -82,9 +85,17 @@ where `a` and `b` are the arguments.
 
 ## Combinations of derived types
 
-Now let's look at some more complex examples. Let's try to declare an array of pointers to functions.
-If we would have such variable, to get the return value of the function we would write `(*(arr[i]))(a, b)`.
-So the declaration would be `int (*(arr[]))(int, int)`.
+Now let's look at some more complex examples. Let's try to declare **an array of pointers to functions**.
+Imagine we have such variable. What is the expression, that we would use to get the basic 
+type element from this compound type? To get the return value of the function we would write: 
+
+```c
+(*(arr[i]))(a, b)
+````
+The declaration type would similliar, but without the concrete values:
+```c
+int (*(arr[]))(int, int)
+```
 
 ### Array of pointers
 

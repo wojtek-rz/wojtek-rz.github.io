@@ -24,6 +24,7 @@ src = "img/avatar.jpg"
 headingAnchor = true
 math = false
 readingTime = true
+toc = false
 
 [article.license]
 enabled = true
@@ -45,8 +46,6 @@ type = "tag-cloud"
 [widgets.homepage.params]
 limit = 10
 
-[[widgets.page]]
-type = "toc"
 
 [opengraph.twitter]
 site = ""

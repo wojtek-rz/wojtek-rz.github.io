@@ -29,7 +29,7 @@ params:
     article:
         headingAnchor: false
         math: false
-        toc: true
+        toc: false
         readingTime: true
         license:
             enabled: false
