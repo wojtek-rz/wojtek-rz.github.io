@@ -205,6 +205,7 @@
 .article-content {
     font-family: var(--article-font-family);
     font-size: var(--article-font-size);
+    letter-spacing: -0.5px;
     padding: 0 var(--card-padding);
     line-height: var(--article-line-height);
 
@@ -282,6 +283,7 @@
     }
 
     code {
+        letter-spacing: normal;
         color: var(--code-text-color);
         background-color: var(--code-background-color);
         padding: 2px 4px;
