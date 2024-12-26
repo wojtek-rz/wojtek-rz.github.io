@@ -1,14 +1,25 @@
 ---
-title: Math Typesetting
+title: Bessel's correction in variance estimation
 description: Why variance estimator is biased and how to correct it
 date: 2024-11-01
 math: true
+hidden: true
 ---
 
-In statistics, the variance is a measure of how far the values in a data set are spread out from the mean. 
-It is caluclated as the average of **squared differences** from the mean. When calculating the variance of a sample, 
-we divide by `n-1` instead of `n` to correct the bias. This is called **Bessel's correction** and is explained nicely 
-[here](https://en.wikipedia.org/wiki/Bessel%27s_correction).
+In statistics, the **variance** is a measure of how far the values in a data set are spread out from the mean. 
+It is caluclated as the average of **squared differences** from the mean. But if we plug in the sample mean to the formula:
+
+$$
+\text{variance} = \text{avg}(\text{mean of the sample})
+$$
+the results would be off by a factor of $\frac{n-1}{n}$, where `n` is the number of entries in the sample. That's for me was very counterituitive, but there is a very good reason for that.
+
+
+## Bessel's correction
+
+The hero of this story is **Bessel's correction**. It's what we apply to the formula to correctly get the variance from the sample. The The nice explanation can be found [here](https://en.wikipedia.org/wiki/Bessel%27s_correction), but it lacks the visual intuition.
+
+## Definitions
 
 Before we dig into the details, let's first define some terms:
 - **population** - the entire datasets of objects we are interested in
