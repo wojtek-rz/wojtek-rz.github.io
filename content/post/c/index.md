@@ -43,6 +43,8 @@ The syntax for declaring each of the derived types is:
 Every of the derived types starts with **the basic type**.
 That's what the expression **would evaluate to** if we would fill the gaps.
 
+![img](decl_usage.svg)
+
 Let's look at each of the derived types and see how they are evaluated:
 
 ### Arrays

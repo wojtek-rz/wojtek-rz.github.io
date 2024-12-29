@@ -187,6 +187,7 @@ Note that the every Python class inherits from the `object` class. Using the C3 
 
 ![image](example3_reg_arrows.svg)
 
+
 In summary, the algorithm performs roughly the strategy "go deep-first as far as possible not breaking the monotonicity, if you can't 
 try next base class". 
 
