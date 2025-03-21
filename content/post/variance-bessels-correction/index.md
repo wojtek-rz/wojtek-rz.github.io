@@ -4,6 +4,7 @@ description: Why variance estimator is biased and how to correct it
 date: 2024-11-01
 math: true
 hidden: true
+draft: true
 ---
 
 In statistics, the **variance** is a measure of how far the values in a data set are spread out from the mean. 
