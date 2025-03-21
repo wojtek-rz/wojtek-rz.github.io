@@ -12,7 +12,7 @@ To run the website locally:
 hugo server
 ```
 
-## Jupyte to markdown
+## Jupyter to markdown
 
 https://github.com/jupyter/nbconvert?tab=readme-ov-file
 
