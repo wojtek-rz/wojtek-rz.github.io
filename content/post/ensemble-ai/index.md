@@ -65,10 +65,10 @@ So we didn't have to learn the model that would do the same thing - calculate wh
 ### The solution from the technical details
 
 First we created the baseline solution - to check that if the system will work and to create better solutions on top of that.
-The baseline solution was to calculate all the losses of the **validation data set we were given** and simply create a threshold for each data point. If the loss from the data point is above the threshold, then that sample was not part of the training process.
+The baseline solution was to calculate all the losses of the **validation data set we were given** and simply create a threshold for all samples. If the loss from the data point is above the threshold, then that sample was not part of the training process.
 (*Disclaimer: in this task we had to output the probability on a scale from 0 to 1, but that's just one step before classification. I will use the threshold analogy because I think it is more intuitive*).
 
-As a result of this discussion, we didn't implement this basic solution, but aimed for something bigger. One threshold for all data points may not be the best idea because 
+After fierce discussion, we decided to don't implement this basic solution, but aimed for something bigger from the start. One threshold for all data points may not be the best idea because 
 some samples are easier to train and some harder. Perhaps the thresholds should be separate for each class? The model we were given classified the image into one of the 44 classes. With 13,000 test samples, there should be enough samples for each of the 44 classes to learn distributions for each class. This "baseline" solution was one of the best for about 10 hours.
 
 The second approach is to create a threshold **per sample**. But since we only have one target model, we get a loss for each image - and we don't know the true class (1 - in training, 0 - out of training). The solution was to use **shadow models**. These models have the same architecture as the original and the training process should be similar. We trained the 250 models on the classification dataset (the dataset we were supposed to classify) and the dataset we know the target model was trained on. But each model was trained on a random half of the classification dataset, so for each data point we had about 125 models where that data point was part of the training process.
@@ -86,9 +86,10 @@ But the score was calculated only on the 30% of test dataset. After calculating 
 
 One thing I regret is that we didn't try to go for the [Bucks for Buckets](https://arxiv.org/abs/2310.08571) task and try something innovative. The hackaton was also about trying out solutions that were not part of the known research and mabye could be (and may be our start in the scientific journey). 
 
-This was my first hackaton and I didn't know what to expect, but I really enjoyed it. It wasn't without its technical difficulties 
+This was my first hackaton and I didn't know what to expect, but I really enjoyed it. 
+It wasn't without its technical difficulties 
 (how do you order 100 pizzas to arrive on time?), 
-but overall the organisers did a very good job 
+but despite that the organisers did a very good job 
 and I would like to thank them very much!
 
 Here's my picture from the my presentation of the first task:
