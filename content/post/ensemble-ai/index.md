@@ -1,7 +1,7 @@
 ---
-title: Ensemble AI hackaton (we scored 2nd place!)
+title: EnsembleAI hackaton (we scored 2nd place!)
 date: 2025-03-21
-description: My story from the Ensemble AI hackaton 
+description: My story from the EnsembleAI hackaton 
 tags:
     - ml
     - hackaton
@@ -15,7 +15,7 @@ Last week together with my team consisting of University of Warsaw and Warsaw Un
 - Piotr Trzaskowski
 - Filip Szympliński
 
-we went to Cracow to [AGH University of Krakow](https://www.agh.edu.pl/) to take part in [Ensemble AI hackaton](https://ensembleaihackathon.pl).
+we went to Cracow to [AGH University of Krakow](https://www.agh.edu.pl/) to take part in [EnsembleAI hackaton](https://ensembleaihackathon.pl).
 
 This hackaton was like no other. It wasn't organised by the companies, but by the scientific clubs from various Polish's universities and academic institutions partnering with [SprintML lab of CISPA](https://sprintml.com/) and sponsors [mBank](https://www.mbank.pl/indywidualny/) and [Jetbrains](https://www.jetbrains.com/). The tasks weren't 
 focused on creating the a user application but rather on creating (and inventing) better solutions to ML security problems and the solution evaluation was very numerical. 
@@ -95,4 +95,4 @@ and I would like to thank them very much!
 
 Here's my picture from the my presentation of the first task:
 
-![source: Ensemble AI](presenting.png)
+![source: EnsembleAI](presenting.png)
