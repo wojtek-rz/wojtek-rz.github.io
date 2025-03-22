@@ -78,7 +78,7 @@ To classify each sample we used statistics. The method is called LIRA - Likeliho
 
 ### Lost hopes near the end
 
-Our score on the leaderboard was almost all the time the best. But other teams we very close, the difference was on the in the fourth decimal place. About 4h near the end we lost the 1st place on this task. Because for trying different techniques there was no time, we were given an advice from the mentor to just train more shadow models. We tried that but didn't take back first place.
+Our score on the leaderboard was almost always the best. But other teams were very close to us, the difference was on the fourth decimal place. About 4 hours before the end we lost the 1st place in this task. As there was no time to try out different techniques, the mentor advised us to just train more shadow models. We tried that, but still couldn't regain first place.
 
 But the score was calculated only on the 30% of test dataset. After calculating final results we saw that not only our solution to the first task was on the 1st place, but there was a larg gap between us and the 2nd place. The team that lost the 1st place must have had an emiotional rollercoaster.
 
