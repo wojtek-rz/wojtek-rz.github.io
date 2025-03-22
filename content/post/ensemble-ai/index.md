@@ -29,9 +29,6 @@ Also we were limited to one cluster session per our account. So if one team memb
 closed the his VSCode window (while using remote ssh extension) without proper disconnecting, his session wouldn't end immidiately and we were blocked. 
 Fortunately we found a solution in killing this processes using `kill -9`.
 
-
-One thing that didn't work out as well as the organizers had hoped was that most of the solutions weren't innovative in any way (with the exception of the first place winner). To score highly in the competition, you had to write one of the methods that were described in the provided papers and the score depended heavily on the implementation.
-
 Among the authors of the task there were present the authors of the [Bucks for Buckets](https://arxiv.org/abs/2310.08571) method. 
 It's a defence technique against stealing encoders exposed via public API. Our task was to steal such an encoder.
 From the results of the competition we can say, that the method works very well - it a was very challenging task 
