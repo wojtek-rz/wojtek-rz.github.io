@@ -24,7 +24,11 @@ src = "img/avatar.jpg"
 headingAnchor = true
 math = false
 readingTime = true
-toc = false
+toc = true
+
+
+[[widgets.page]]
+type = "toc"
 
 [article.license]
 enabled = true

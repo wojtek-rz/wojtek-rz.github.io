@@ -13,6 +13,10 @@ links:
     description: My LinkedIn profile.
     website: https://www.linkedin.com/in/wojtekrzeplinski/
     image: linkedin.png
+  - title: Duckling programming language
+    description: Website of the project I take part of and I strongly support.
+    website: https://ducktype.org/
+    image: duckling.png
   - title: University of Warsaw
     description: My faculty's website.
     website: https://www.mimuw.edu.pl/pl/
