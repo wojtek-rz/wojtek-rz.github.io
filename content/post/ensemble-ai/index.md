@@ -20,11 +20,15 @@ we went to Cracow to [AGH University of Krakow](https://www.agh.edu.pl/) to take
 This hackaton was like no other. It wasn't organised by the companies, but by the scientific clubs from various Polish's universities and academic institutions partnering with [SprintML lab of CISPA](https://sprintml.com/) and sponsors [mBank](https://www.mbank.pl/indywidualny/) and [Jetbrains](https://www.jetbrains.com/). The tasks weren't 
 focused on creating the a user application but rather on creating (and inventing) better solutions to ML security problems and the solution evaluation was very numerical. 
 
-I especially liked this scientific vibe. The organizers provided us with scientific papers related to each task and reading those was essiential to understanding the problems as well as a starting point for creating solutions. We were also given access to [Academic Computer Centre Cyfronet AGH](https://www.cyfronet.pl/en/4421,main.html) to Athena supercomputer which was a very fun and challenging experience. We were given one node (or maybe fraction of the node) per team and connecting and working through SSH on the GPU cluster was not so easy - required reading the provided documentation but also some knowledge on how to setup a Python environment.
+I especially liked the scientific vibe. The organizers provided us with scientific papers related to each task and reading those was essiential to understanding the problems as well as a starting point for creating solutions.
+
+We were also given access to [Academic Computer Centre Cyfronet AGH](https://www.cyfronet.pl/en/4421,main.html) to Athena supercomputer which was a very fun and challenging experience. We were given one node (or maybe fraction of the node) per team and connecting and working through SSH on the GPU cluster was not so easy - required reading the provided documentation but also some knowledge on how to setup a Python environment.
 ![img]( https://imgs.xkcd.com/comics/python_environment.png).
 
 Also we were limited to one cluster session per our account. So if one team member 
-just closed the VSCode app (using remote ssh) without proper disconnecting, his session wouldn't immidiately disconnect and we were blocked. Fortunately we found a solution in killing this processes using `kill -9`.
+closed the his VSCode window (while using remote ssh extension) without proper disconnecting, his session wouldn't end immidiately and we were blocked. 
+Fortunately we found a solution in killing this processes using `kill -9`.
+
 
 One thing that didn't work out as well as the organizers had hoped was that most of the solutions weren't innovative in any way (with the exception of the first place winner). To score highly in the competition, you had to write one of the methods that were described in the provided papers and the score depended heavily on the implementation.
 
