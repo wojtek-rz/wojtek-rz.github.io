@@ -20,3 +20,5 @@ identifier = "linkedin"
 name = "Linkedin"
 url = "https://www.linkedin.com/in/wojtekrzeplinski/"
 
+[social.params]
+icon = "brand-linkedin"
